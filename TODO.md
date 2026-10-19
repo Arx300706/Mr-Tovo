@@ -5,6 +5,8 @@
 Le travail est découpé en **pistes** indépendantes : chaque personne prend une piste et peut avancer **en même temps que les autres**, sans attendre personne.
 Pour que ce soit possible, on fixe **lundi matin** tout ce qui est partagé : modèle de données, statuts, droits, URL des pages, propriétaires des fichiers. Après ça, chacun travaille dans son coin et on intègre tous les jours.
 
+> **Référence fonctionnelle : le board Figma** [logiciel de gestion RH — userflow](https://www.figma.com/board/MYVd1uK1HHQze2JKzFXeob/logiciel-de-gestion-RH---userflow) (userflow + MCD). Ce fichier suit ses noms d'objets ; les points encore incomplets dans le board sont marqués ✏️.
+>
 > Rappel de la stack (voir `README.md`) : Java 21, Spring Boot 4, Thymeleaf, Maven.
 > Le **Back** s'occupe des données, des règles métier, des contrôleurs et de la sécurité.
 > Le **Front** s'occupe des templates Thymeleaf, du CSS et du JavaScript.
@@ -50,16 +52,16 @@ L'application suit le parcours complet d'un recrutement, du besoin jusqu'à l'in
 
 | Bloc | Sujet | Ce qu'il faut pouvoir faire | Objets métier |
 |---|---|---|---|
-| **1** | Expression du besoin en personnel | Un manager demande la création ou le remplacement d'un poste. Circuit de validation : **Manager → RH → Direction → ouverture du recrutement**. | Département, Poste, DemandeRecrutement, Validation |
-| **2** | Recrutement | Transformer une demande validée en offre d'emploi, la publier, recevoir des candidatures, présélectionner, organiser entretiens et tests, garder les évaluations et la décision finale. | OffreEmploi, Candidat, Candidature, Entretien, EvaluationCandidat |
-| **3** | Sélection et embauche | Envoyer une proposition d'embauche au candidat retenu. S'il accepte : créer le dossier salarié et son matricule, puis le contrat, le poste et l'affectation. | PropositionEmbauche, Employé, Contrat, Affectation |
-| **4** | Contrat et onboarding | Garder l'historique des contrats (CDD, renouvellement, CDI…). Suivre l'intégration avec une checklist : contrat signé, badge, compte, matériel, formation, inscription paie. | Contrat, Affectation, Onboarding, OnboardingTâche, Document |
+| **1** | Expression du besoin en personnel | Un manager demande la création ou le remplacement d'un poste. Circuit de validation : **Manager → RH → Direction → ouverture du recrutement** (dans le MCD : passage par la **Finance**, voir section 3). | Departement, Service, Poste, Besoin, Type_Besoin, Statut_Besoin, Validation |
+| **2** | Recrutement | Transformer une demande validée en offre d'emploi, la publier, recevoir des candidatures, présélectionner, organiser entretiens et tests, garder les évaluations et la décision finale. | Offre, Compte, Candidat, Candidature, Entretien, Evaluation_Candidat |
+| **3** | Sélection et embauche | Envoyer une proposition d'embauche au candidat retenu. S'il accepte : créer le dossier salarié et son matricule, puis le contrat, le poste et l'historique. | Proposition, Employe, Contrat, Historique_Employe |
+| **4** | Contrat et onboarding | Garder l'historique des contrats (CE, CDD, renouvellement, CDI…). Suivre l'intégration avec une checklist : contrat signé, badge, compte, matériel, formation, inscription paie. | Contrat, Statut_Contrat, Type_Contrat, Historique_Employe, Onboarding, Onboarding_Tache, Document |
 
 ### Les 3 règles de conception à ne jamais oublier
 
-1. **Un POSTE existe indépendamment de l'EMPLOYÉ.** Un poste peut être vacant, occupé, puis libéré et réoccupé par quelqu'un d'autre. On ne supprime jamais un poste parce que son titulaire part.
+1. **Un POSTE existe indépendamment de l'EMPLOYÉ.** Un poste peut être vacant, occupé, puis libéré et réoccupé par quelqu'un d'autre. On ne supprime jamais un poste parce que son titulaire part (dans le MCD : `estOccupe` passe à non).
 2. **CANDIDAT ≠ EMPLOYÉ.** Une personne peut avoir plusieurs candidatures avant d'être embauchée. Le dossier employé n'est créé **qu'après acceptation** de la proposition d'embauche ; il garde un lien vers le candidat d'origine.
-3. **On n'écrase pas l'historique.** Le type de contrat n'est **pas** une simple colonne de l'employé. Chaque contrat (CDD, renouvellement, CDI…) est une ligne distincte avec ses dates. Pareil pour les affectations.
+3. **On n'écrase pas l'historique.** Le type de contrat n'est **pas** une simple colonne de l'employé. Chaque contrat (CE, CDD, renouvellement, CDI…) est une ligne distincte de **Contrat**, et chaque changement de poste ou de contrat ajoute une ligne dans **Historique_Employe**. Les champs « actuel » de l'employé ne sont qu'un raccourci.
 
 ### Architecture technique visée
 
@@ -75,134 +77,170 @@ L'application suit le parcours complet d'un recrutement, du besoin jusqu'à l'in
 
 ## 2. Modèle de données de référence
 
-> Ce modèle est la **référence commune** des trois équipes. Le Back l'implémente, le Design et le Front s'en servent pour savoir quelles informations afficher et saisir.
-> Toute modification doit être validée en équipe puis reportée ici.
+> **Source : le MCD du board Figma** « logiciel de gestion RH — userflow ». Les noms ci-dessous sont **ceux du MCD** : le Back les implémente tels quels, le Design et le Front s'en servent pour savoir quoi afficher et saisir.
+> Toute modification est faite **d'abord dans le MCD Figma**, puis reportée ici.
 
-Champs présents partout (pas répétés dans les tableaux) : identifiant, date de création, date de modification, créé par.
+Légende : ✅ = déjà défini dans le MCD Figma · ✏️ = **incomplet dans le MCD, à compléter lundi matin (T-02)**. Pour les ✏️, les champs proposés ici sont une base de départ.
 
-### Bloc 1 — Besoin
+Champs présents partout (pas répétés) : date de création, date de modification, créé par.
 
-| Objet | Champs principaux | Liens |
+### 2.1 Structure de l'entreprise ✅
+
+| Objet | Champs (MCD) | Remarques |
 |---|---|---|
-| **Département** | nom, code, description, responsable | a plusieurs Postes ; a un responsable (Utilisateur) |
-| **Poste** | intitulé, code, description des missions, niveau / catégorie, statut (vacant, occupé, gelé, supprimé) | appartient à un Département ; peut avoir plusieurs Affectations dans le temps |
-| **DemandeRecrutement** | type (création ou remplacement), effectif demandé, motif, budget estimé, date d'embauche souhaitée, statut, commentaire | concerne un Poste (existant pour un remplacement, à créer pour une création) ; un Département ; créée par un Manager ; a plusieurs Validations |
-| **Validation** | étape (RH, Direction), décision (approuvée, refusée, à compléter), commentaire, date | appartient à une DemandeRecrutement ; faite par un Utilisateur |
+| **Departement** ✅ | Id_Departement, Libelle, Id_Manager | Id_Manager = l'employé qui dirige le département |
+| **Service** ✅ | Id_Service, Libelle, Id_Departement | un département contient plusieurs services |
+| **Poste** ✅ | Id_Poste, Libelle, Id_Departement, Id_Service, estManager (oui/non), estOccupe (oui/non), estActif (oui/non), DateModification | exemples de libellés : Développeur junior 1, Développeur junior 2, Chef de projet, Chef de service. **Le poste existe sans employé** : `estOccupe` passe à non quand le titulaire part, on ne supprime pas le poste (`estActif` à non pour le retirer) |
 
-### Bloc 2 — Recrutement
+### 2.2 Employés et contrats ✅
 
-| Objet | Champs principaux | Liens |
+| Objet | Champs (MCD) | Remarques |
 |---|---|---|
-| **OffreEmploi** | titre, description, profil recherché, type de contrat proposé, lieu, fourchette de salaire (optionnelle), date de publication, date limite, statut | issue d'une DemandeRecrutement validée ; reçoit plusieurs Candidatures |
-| **Candidat** | nom, prénom, e-mail (unique), téléphone, adresse, date de naissance (optionnelle) | a plusieurs Candidatures ; peut devenir un Employé |
-| **Candidature** | date de dépôt, lettre de motivation, CV (Document), source (site, recommandation, salon…), statut, motif de rejet | relie un Candidat à une OffreEmploi ; a plusieurs Entretiens et Évaluations |
-| **Entretien** | type (téléphonique, RH, technique, test écrit, final), date et heure, lieu ou lien visio, durée, statut (planifié, réalisé, annulé, reporté) | appartient à une Candidature ; un ou plusieurs évaluateurs (Utilisateurs) |
-| **ÉvaluationCandidat** | note globale, critères notés (compétences, motivation, savoir-être…), points forts, points faibles, avis (favorable, réservé, défavorable), commentaire | liée à un Entretien (ou à la Candidature) ; écrite par un évaluateur |
+| **Employe** ✅ | Id_Employe, Nom, Prenom, Matricule, Id_Poste (actuel), Id_Contrat (actuel) | les deux champs « actuel » sont un **raccourci** vers le poste et le contrat en cours ; l'historique complet est dans Contrat et Historique_Employe |
+| **Contrat** ✅ | Id_Contrat, Id_Employe, Date, Id_Statut_Contrat, Id_Type_Contrat | **une ligne par contrat** : un CE puis un CDD puis un CDI = 3 lignes ✏️ ajouter : date de début, date de fin (vide pour un CDI), salaire, contrat précédent |
+| **Statut_Contrat** ✅ | Id_Statut_Contrat, Libelle | valeurs : **créé, signé, validé, annulé, rompu** |
+| **Type_Contrat** ✅ | Id_Type_Contrat, Libelle | valeurs : **CE** (contrat d'essai), **CDD**, **CDI** |
+| **Historique_Employe** ✅ | Id_Historique_Employe, Id_Employe, Id_Poste, Id_Contrat, Date | **une ligne à chaque changement** de poste ou de contrat ; on n'efface jamais une ligne. C'est ce qui garde l'historique (règle « ne pas écraser l'historique ») |
 
-### Bloc 3 — Embauche
+### 2.3 Besoin en personnel ✅
 
-| Objet | Champs principaux | Liens |
+| Objet | Champs (MCD) | Remarques |
 |---|---|---|
-| **PropositionEmbauche** | salaire proposé, date de début proposée, type de contrat, date d'envoi, date limite de réponse, statut, motif de refus | liée à une Candidature retenue |
-| **Employé** | matricule (unique, généré automatiquement), nom, prénom, e-mail professionnel, téléphone, date d'entrée, statut (actif, sorti) | issu d'un Candidat ; a plusieurs Contrats, Affectations, Documents, un ou plusieurs Onboardings |
+| **Besoin** ✅ | Id_Besoin, Id_Manager, Id_Type_Besoin, Id_Statut_Besoin | ✏️ ajouter : Id_Poste (poste concerné ou créé), Id_Departement, effectif, motif, budget, date souhaitée |
+| **Type_Besoin** ✅ | Id_Type_Besoin, Libelle | valeurs : **création poste**, **recherche personnel** |
+| **Statut_Besoin** ✅ | Id_Statut_Besoin, Libelle | valeurs actuelles : **créé, envoyé Finance, retour Finance** ✏️ à compléter (voir section 3) |
+| **Validation** ✏️ | Id_Validation, Id_Besoin, étape, décision, commentaire, date, Id_Utilisateur | **absent du MCD** : à ajouter pour garder l'historique des décisions (slide Bloc 1) |
 
-### Bloc 4 — Contrat et onboarding
+### 2.4 Recrutement ✏️ (boîtes vides ou copiées-collées dans le MCD)
 
-| Objet | Champs principaux | Liens |
+Dans le MCD, les boîtes **Offre**, **Candidature**, **Proposition**, **Statut_offre**, **Statut_candidature** et **Statut_proposition** contiennent encore « Id_Departement, Libelle » (copier-coller), et les boîtes **Besoins**, **Offres**, **Candidature**, **Compte**, **Proposition** de droite sont vides. À compléter lundi matin. Proposition :
+
+| Objet | Champs proposés | Remarques |
 |---|---|---|
-| **Contrat** | type (CDD, CDI, stage, alternance…), date de début, date de fin (vide pour un CDI), salaire, temps de travail, période d'essai, statut (brouillon, signé, actif, terminé), motif de fin | appartient à un Employé ; peut pointer vers le contrat précédent (renouvellement, passage CDD → CDI) |
-| **Affectation** | date de début, date de fin (vide si en cours), taux d'occupation, motif | relie un Employé à un Poste pendant une période |
-| **Onboarding** | date de début, date de fin prévue, statut (en cours, terminé, abandonné), progression (%) | concerne un Employé ; a plusieurs OnboardingTâches |
-| **OnboardingTâche** | libellé, catégorie (contrat, badge, compte informatique, matériel, formation, paie, autre), responsable, échéance, statut (à faire, en cours, fait, non applicable), commentaire, date de réalisation | appartient à un Onboarding ; peut avoir un Document justificatif |
-| **Document** | nom, type (CV, lettre, contrat signé, pièce d'identité, RIB, diplôme…), nom du fichier stocké, format, taille, date d'ajout | rattaché à un Candidat, une Candidature, un Employé, un Contrat ou une OnboardingTâche |
+| **Offre** ✏️ | Id_Offre, Id_Besoin, Id_Poste, Titre, Description, Profil, Id_Type_Contrat, Lieu, Date_publication, Date_limite, Id_Statut_Offre | une offre vient d'un besoin validé |
+| **Statut_Offre** ✏️ | Id_Statut_Offre, Libelle | brouillon, publiée, clôturée, pourvue, annulée |
+| **Compte** ✏️ | Id_Compte, Identifiant (e-mail ou matricule), Mot_de_passe (chiffré), Rôle, Id_Employe **ou** Id_Candidat, Actif | le userflow a **deux connexions** : employé (matricule + mot de passe) et candidat (identifiant + mot de passe) |
+| **Candidat** ✏️ | Id_Candidat, Nom, Prenom, Email (unique), Telephone, CV (document) | **absent du MCD** : à ajouter. **CANDIDAT ≠ EMPLOYÉ** : une personne peut avoir plusieurs candidatures avant d'être embauchée |
+| **Candidature** ✏️ | Id_Candidature, Id_Candidat, Id_Offre, Date, Lettre, CV, Id_Statut_Candidature, Motif_rejet | dans le MCD elle pointe vers Id_Employe : **à corriger**, elle doit pointer vers le **Candidat** et l'**Offre** |
+| **Statut_Candidature** ✏️ | Id_Statut_Candidature, Libelle | reçue, présélectionnée, en entretien, retenue, rejetée, retirée, embauchée |
+| **Entretien** ✏️ | Id_Entretien, Id_Candidature, Type, Date, Lieu, Id_Evaluateur, Statut | **absent du MCD** (slide Bloc 2) |
+| **Evaluation_Candidat** ✏️ | Id_Evaluation, Id_Entretien, Note, Avis, Commentaire, Id_Evaluateur | **absent du MCD** (slide Bloc 2) |
+| **Proposition** ✏️ | Id_Proposition, Id_Candidature, Salaire, Date_debut, Id_Type_Contrat, Date_limite_reponse, Id_Statut_Proposition | |
+| **Statut_Proposition** ✏️ | Id_Statut_Proposition, Libelle | brouillon, envoyée, acceptée, refusée, expirée |
 
-### Transverse
+### 2.5 Onboarding et documents ✏️ (absents du MCD, demandés par la slide Bloc 4)
 
-| Objet | Champs principaux | Liens |
+| Objet | Champs proposés | Remarques |
 |---|---|---|
-| **Utilisateur** | nom, prénom, e-mail (identifiant), mot de passe chiffré, actif oui/non | a un ou plusieurs Rôles ; rattaché à un Département (pour les managers) |
-| **Rôle** | code (ADMIN, RH, DIRECTION, MANAGER, EMPLOYE), libellé | |
-| **Notification** | destinataire, titre, message, lien vers l'objet concerné, lue oui/non, date | |
-| **JournalAudit** | qui, quand, action (création, modification, changement de statut, suppression), objet concerné, ancienne valeur, nouvelle valeur | |
-| **ModèleTâcheOnboarding** | libellé, catégorie, responsable par défaut (rôle), délai en jours après l'arrivée, obligatoire oui/non | sert à générer automatiquement les tâches d'un Onboarding |
+| **Onboarding** ✏️ | Id_Onboarding, Id_Employe, Date_debut, Statut, Progression | créé automatiquement à l'embauche |
+| **Onboarding_Tache** ✏️ | Id_Tache, Id_Onboarding, Libelle, Categorie (contrat signé, badge, compte, matériel, formation, inscription paie), Responsable, Echeance, Statut | la checklist |
+| **Document** ✏️ | Id_Document, Type (CV, contrat signé, pièce d'identité…), Fichier, Date, rattaché à un candidat / employé / contrat / tâche | GED |
+
+### 2.6 Transverse
+
+| Objet | Champs | Remarques |
+|---|---|---|
+| **Notification** (P2) | destinataire, message, lien, lue, date | |
+| **Journal_Audit** (P2) | qui, quand, action, objet, avant, après | |
+
+**Les tables « Statut_… » et « Type_… »** sont des **tables de référence** (choix du MCD) : leurs valeurs sont chargées au démarrage avec les données de démo et ne changent pas pendant l'utilisation.
 
 ---
 
 ## 3. Statuts et workflows
 
 > Les transitions qui ne sont pas listées ici sont **interdites**. Le Back les bloque, le Front n'affiche que les boutons des transitions possibles.
+> Les libellés des statuts sont ceux des tables **Statut_…** du MCD.
 
-### DemandeRecrutement
+### Besoin
+
+Le MCD prévoit pour l'instant les statuts **créé → envoyé Finance → retour Finance**. La slide du cours demande **Manager → RH → Direction → ouverture du recrutement**.
+**À trancher lundi (T-03).** Proposition qui garde les deux : le manager crée, les RH vérifient, la Finance valide le budget, puis les RH ouvrent le recrutement.
 
 | De | Vers | Qui | Condition |
 |---|---|---|---|
-| Brouillon | Soumise | Manager auteur | tous les champs obligatoires remplis |
-| Soumise | Validée RH | RH | |
-| Soumise | Refusée | RH | commentaire obligatoire |
-| Soumise | À compléter | RH | commentaire obligatoire ; retourne au manager |
-| À compléter | Soumise | Manager auteur | |
-| Validée RH | Validée Direction | Direction | |
-| Validée RH | Refusée | Direction | commentaire obligatoire |
-| Validée Direction | Recrutement ouvert | RH | crée l'OffreEmploi (brouillon) |
-| Brouillon, Soumise, À compléter | Annulée | Manager auteur | |
+| créé | envoyé RH | Manager auteur | tous les champs obligatoires remplis |
+| envoyé RH | envoyé Finance | RH | |
+| envoyé RH | à compléter | RH | commentaire obligatoire ; retourne au manager |
+| à compléter | envoyé RH | Manager auteur | |
+| envoyé Finance | retour Finance — validé | Finance | budget accepté |
+| envoyé Finance | retour Finance — refusé | Finance | commentaire obligatoire |
+| retour Finance — validé | recrutement ouvert | RH | crée l'Offre en brouillon |
+| créé, envoyé RH, à compléter | annulé | Manager auteur | |
 
-Chaque décision RH ou Direction crée une ligne **Validation** : on garde tout l'historique, même en cas d'allers-retours.
+Valeurs à ajouter dans **Statut_Besoin** si la proposition est retenue : envoyé RH, à compléter, retour Finance — validé, retour Finance — refusé, recrutement ouvert, annulé.
+Si l'équipe garde aussi une étape **Direction**, elle se place entre « retour Finance — validé » et « recrutement ouvert ».
+Chaque décision crée une ligne **Validation** : on garde tout l'historique, même en cas d'allers-retours.
 
-### OffreEmploi
+### Offre
 
-Brouillon → Publiée → Clôturée (date limite passée ou fermeture manuelle) → Pourvue (une proposition a été acceptée).
-Publiée → Annulée possible par RH.
+brouillon → publiée → clôturée (date limite passée ou fermeture manuelle) → pourvue (une proposition a été acceptée).
+publiée → annulée, possible par les RH.
 
 ### Candidature
 
-Reçue → Présélectionnée → En entretien → Retenue → Proposition envoyée → Embauché
-Depuis n'importe quel statut avant « Embauché » : → Rejetée (motif obligatoire) ou → Retirée (par le candidat).
-Proposition envoyée → Proposition refusée (le candidat refuse) : on peut alors retenir un autre candidat.
+reçue → présélectionnée → en entretien → retenue → embauchée.
+Depuis n'importe quel statut avant « embauchée » : → rejetée (motif obligatoire) ou → retirée (par le candidat, depuis son compte).
 
-### PropositionEmbauche
+### Proposition
 
-Brouillon → Envoyée → Acceptée **ou** Refusée **ou** Expirée (date limite dépassée).
-À l'acceptation, déclencher **automatiquement** dans cet ordre :
-1. Création de l'Employé avec génération du matricule.
-2. Création du Contrat (statut brouillon).
-3. Création de l'Affectation sur le Poste ; le Poste passe à « occupé ».
-4. Création de l'Onboarding avec ses tâches générées depuis les modèles.
-5. L'Offre passe à « Pourvue », les autres candidatures encore ouvertes reçoivent une notification de clôture.
+brouillon → envoyée → acceptée **ou** refusée **ou** expirée (date limite dépassée).
+Si le candidat refuse, les RH peuvent retenir un autre candidat.
+À l'acceptation, déclencher **automatiquement**, dans cet ordre :
+1. Création de l'**Employe** avec génération du **Matricule** et lien vers le Candidat d'origine.
+2. Création du **Contrat** au statut « créé », avec le type de la proposition (CE, CDD ou CDI).
+3. Mise à jour du **Poste** : `estOccupe` = oui.
+4. Remplissage de `Id_Poste (actuel)` et `Id_Contrat (actuel)` de l'employé, **et** ajout d'une ligne dans **Historique_Employe** (employé, poste, contrat, date).
+5. Création de l'**Onboarding** avec ses tâches.
+6. Offre → « pourvue » ; candidature → « embauchée » ; le compte candidat est relié à l'employé.
 
-### Contrat
+### Contrat (statuts du MCD : créé, signé, validé, annulé, rompu)
 
-Brouillon → Signé → Actif → Terminé.
-Un **renouvellement** ou un **passage CDD → CDI** = un **nouveau** contrat qui pointe vers le précédent ; l'ancien passe à « Terminé ». On ne modifie jamais un contrat signé.
-Règle : un employé ne peut avoir **qu'un seul contrat actif** à une date donnée.
+| De | Vers | Qui | Remarque |
+|---|---|---|---|
+| créé | signé | RH | le contrat signé est joint en document (P2) |
+| signé | validé | RH | le contrat est en vigueur |
+| créé, signé | annulé | RH | avant l'entrée en vigueur |
+| validé | rompu | RH | fin anticipée (motif obligatoire) |
+
+- Un **renouvellement** ou un **passage CE → CDD → CDI** = un **nouveau** contrat, jamais une modification de l'ancien. L'ancien sort de « validé ». ✏️ Le MCD n'a pas de statut pour un contrat arrivé normalement à son terme : **ajouter « terminé »** dans Statut_Contrat (à décider en T-03).
+- À chaque nouveau contrat : mettre à jour `Id_Contrat (actuel)` de l'employé **et** ajouter une ligne dans **Historique_Employe**.
+- Un employé ne peut avoir **qu'un seul contrat « validé »** à la fois.
+- Un contrat « signé » ou « validé » n'est plus modifiable.
 
 ### Onboarding
 
-En cours → Terminé (automatique quand toutes les tâches obligatoires sont « fait » ou « non applicable »).
-En cours → Abandonné (ex. départ pendant la période d'essai).
+en cours → terminé (automatique quand toutes les tâches obligatoires sont « fait » ou « non applicable »).
+en cours → abandonné (ex. rupture pendant le contrat d'essai).
 
 ---
 
 ## 4. Rôles et droits
 
-| Action | Manager | RH | Direction | Employé | Admin |
-|---|:-:|:-:|:-:|:-:|:-:|
-| Créer / soumettre une demande de recrutement | ✅ (son département) | ✅ | | | |
-| Valider une demande (étape RH) | | ✅ | | | |
-| Valider une demande (étape Direction) | | | ✅ | | |
-| Gérer départements et postes | lecture | ✅ | lecture | | ✅ |
-| Créer / publier une offre | | ✅ | | | |
-| Voir les candidatures | ses postes | ✅ | ✅ | | |
-| Planifier un entretien | ✅ (ses postes) | ✅ | | | |
-| Saisir une évaluation | ✅ si évaluateur | ✅ | ✅ si évaluateur | | |
-| Envoyer une proposition d'embauche | | ✅ | | | |
-| Gérer contrats et affectations | lecture (son équipe) | ✅ | lecture | lecture (les siens) | |
-| Suivre l'onboarding | ses nouveaux arrivants | ✅ | lecture | sa propre checklist | |
-| Cocher une tâche d'onboarding | si responsable | ✅ | | si responsable | |
-| Gérer utilisateurs et rôles | | | | | ✅ |
-| Voir le journal d'audit | | ✅ | | | ✅ |
-| Tableau de bord / reporting | son département | ✅ | ✅ | | ✅ |
+Le userflow Figma part d'un **accueil public** (À propos de l'entreprise, liste des offres d'emploi) et d'une **connexion** à deux entrées :
+- **employé** : matricule + mot de passe, puis un espace selon le rôle (Manager, RH, Finance… voir ci-dessous) ;
+- **candidat** : identifiant + mot de passe (ou création de compte), pour postuler et suivre ses candidatures.
 
-Les **candidats** n'ont pas de compte : ils postulent via une page publique des offres.
+| Action | Candidat | Manager | RH | Finance | Employé | Admin |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| Voir les offres publiées (sans connexion) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Créer un compte candidat, postuler, suivre ses candidatures | ✅ | | | | | |
+| Créer / envoyer un besoin | | ✅ (son département) | ✅ | | | |
+| Vérifier un besoin (étape RH) | | | ✅ | | | |
+| Valider le budget d'un besoin (étape Finance) | | | | ✅ | | |
+| Gérer départements, services et postes | | lecture | ✅ | lecture | | ✅ |
+| Créer / publier une offre | | | ✅ | | | |
+| Voir les candidatures | ses propres candidatures | ses postes | ✅ | | | |
+| Planifier un entretien | | ✅ (ses postes) | ✅ | | | |
+| Saisir une évaluation | | ✅ si évaluateur | ✅ | | | |
+| Envoyer une proposition d'embauche | | | ✅ | | | |
+| Répondre à une proposition | ✅ (depuis son compte) | | ✅ (saisie pour lui) | | | |
+| Gérer contrats et historique employé | | lecture (son équipe) | ✅ | lecture | lecture (les siens) | |
+| Suivre l'onboarding | | ses nouveaux arrivants | ✅ | | sa propre checklist | |
+| Gérer comptes et rôles | | | | | | ✅ |
+| Tableau de bord | | son département | ✅ | budgets | | ✅ |
+
+✏️ **À confirmer lundi (T-03)** : la liste exacte des rôles du userflow (y a-t-il un rôle **Direction** en plus de la Finance ?) et ce que fait le premier espace en haut du userflow.
 
 ---
 
@@ -212,14 +250,14 @@ Les **candidats** n'ont pas de compte : ils postulent via une page publique des 
 
 | Piste | Équipe | Sujet | Écrans / objets couverts |
 |---|---|---|---|
-| **DS1** | Design | Système visuel + Blocs 1 et 4 + transverse | charte, composants, gabarit, connexion, demandes, postes, contrats, onboarding, tableau de bord |
-| **DS2** | Design | Parcours + Blocs 2 et 3 + soutenance | personas, parcours, offres, page publique, candidatures, entretiens, proposition, dossier salarié, support de présentation |
-| **BK0** | Back | Socle, sécurité, workflow, services transverses | configuration, base, connexion, rôles, moteur de statuts, fichiers, notifications, audit |
-| **BK1** | Back | Bloc 1 — Besoin en personnel | Département, Poste, DemandeRecrutement, Validation |
-| **BK2** | Back | Bloc 2 — Recrutement | OffreEmploi, Candidat, Candidature, Entretien, ÉvaluationCandidat |
-| **BK3** | Back | Blocs 3 et 4 — Embauche, contrat, onboarding | PropositionEmbauche, Employé, Contrat, Affectation, Onboarding, OnboardingTâche, ModèleTâche |
-| **FR0** | Front | Socle + Bloc 1 + transverse | gabarit, CSS commun, fragments, connexion, erreurs, pages du bloc 1, notifications, tableau de bord |
-| **FR1** | Front | Bloc 2 + pages publiques | offres, page carrières publique, candidatures, entretiens, évaluations |
+| **DS1** | Design | Système visuel + Blocs 1 et 4 + transverse | charte, composants, gabarit, connexion, besoins, postes, contrats, onboarding, tableau de bord |
+| **DS2** | Design | Userflow + MCD + Blocs 2 et 3 + soutenance | finir le userflow et le MCD Figma, espace candidat, offres, page publique, candidatures, entretiens, proposition, dossier salarié, support de présentation |
+| **BK0** | Back | Socle, sécurité, workflow, services transverses | configuration, base, comptes et connexion (employé / candidat), rôles, tables de référence, moteur de statuts, fichiers, notifications, audit |
+| **BK1** | Back | Bloc 1 — Besoin en personnel | Departement, Service, Poste, Besoin, Type_Besoin, Statut_Besoin, Validation |
+| **BK2** | Back | Bloc 2 — Recrutement | Offre, Statut_Offre, Candidat, Candidature, Statut_Candidature, Entretien, Evaluation_Candidat, espace candidat |
+| **BK3** | Back | Blocs 3 et 4 — Embauche, contrat, onboarding | Proposition, Statut_Proposition, Employe, Contrat, Statut_Contrat, Type_Contrat, Historique_Employe, Onboarding, Onboarding_Tache |
+| **FR0** | Front | Socle + Bloc 1 + transverse | gabarit, CSS commun, fragments, connexion (employé / candidat), erreurs, pages du bloc 1, notifications, tableau de bord |
+| **FR1** | Front | Bloc 2 + pages publiques + espace candidat | accueil public, offres, page carrières publique, compte candidat, candidatures, entretiens, évaluations |
 | **FR2** | Front | Blocs 3 et 4 | proposition, employés, dossier salarié, contrats, onboarding |
 
 **Moins de 9 personnes ?** Une personne prend plusieurs pistes de la même équipe, en suivant l'ordre de chacune. Regroupements conseillés : BK0 + BK1, BK2 + BK3, FR0 + FR1, DS1 + DS2.
@@ -240,16 +278,17 @@ Pour éviter les conflits Git, chaque fichier a **un seul propriétaire**. Les a
 | Fichiers / dossiers | Propriétaire |
 |---|---|
 | `pom.xml`, `application.properties` et profils, configuration de sécurité, classes de base communes aux entités | **BK0** |
-| Package Java du domaine « commun » (utilisateurs, rôles, notifications, audit, documents, workflow) | **BK0** |
-| Package Java du domaine « besoin » (départements, postes, demandes, validations) | **BK1** |
+| Package Java du domaine « commun » (comptes, rôles, notifications, audit, documents, workflow) | **BK0** |
+| Package Java du domaine « besoin » (départements, services, postes, besoins, validations) | **BK1** |
 | Package Java du domaine « recrutement » (offres, candidats, candidatures, entretiens, évaluations) | **BK2** |
-| Packages Java des domaines « embauche » et « onboarding » (propositions, employés, contrats, affectations, onboarding) | **BK3** |
+| Packages Java des domaines « embauche » et « onboarding » (propositions, employés, contrats, historique employé, onboarding) | **BK3** |
 | Données de démo : **un fichier par domaine**, chacun remplit le sien | chaque piste Back |
 | `templates/fragments/` (gabarit, composants réutilisables), `static/css/style.css`, `static/js/app.js` | **FR0** |
-| `templates/auth/`, `templates/erreurs/`, `templates/dashboard/`, `templates/notifications/`, `templates/departements/`, `templates/postes/`, `templates/demandes/` | **FR0** |
-| `templates/public/`, `templates/offres/`, `templates/candidatures/`, `templates/candidats/`, `templates/entretiens/`, `templates/evaluations/` + `static/css/recrutement.css` | **FR1** |
+| `templates/auth/`, `templates/erreurs/`, `templates/dashboard/`, `templates/notifications/`, `templates/departements/`, `templates/postes/`, `templates/besoins/` | **FR0** |
+| `templates/public/`, `templates/espace-candidat/`, `templates/offres/`, `templates/candidatures/`, `templates/candidats/`, `templates/entretiens/`, `templates/evaluations/` + `static/css/recrutement.css` | **FR1** |
 | `templates/propositions/`, `templates/employes/`, `templates/contrats/`, `templates/onboarding/` + `static/css/rh.css` | **FR2** |
-| Maquettes Figma : une page par bloc | **DS1** (charte, composants, blocs 1 et 4), **DS2** (parcours, blocs 2 et 3) |
+| Board Figma « userflow » et MCD | **DS2** (les autres commentent dans Figma, DS2 modifie) |
+| Maquettes Figma : une page par bloc | **DS1** (charte, composants, blocs 1 et 4), **DS2** (blocs 2 et 3, espace candidat) |
 | `TODO.md` | tout le monde (on ne modifie que les cases et les prénoms de sa piste) |
 
 ### 5.4 Rituels de l'équipe (courts !)
@@ -266,8 +305,8 @@ Pour éviter les conflits Git, chaque fichier a **un seul propriétaire**. Les a
 **Lundi 9h00 → 10h30, toute l'équipe ensemble.** C'est la seule étape où tout le monde doit être présent. Elle débloque toute la semaine.
 
 - [ ] **T-01** (15 min) Tout le monde a cloné le projet et l'a lancé une fois en local (voir `README.md`).
-- [ ] **T-02** (20 min) Relire et valider le **modèle de données** (section 2). Toute modification est écrite dans ce fichier tout de suite.
-- [ ] **T-03** (10 min) Valider les **statuts et transitions** (section 3) et la **matrice des droits** (section 4).
+- [ ] **T-02** (30 min) Relire le **MCD Figma** avec la section 2 et le **compléter** (voir DS2-01) : boîtes vides ou copiées-collées (Offre, Candidature, Proposition, Statut_…, Compte), objets manquants (Candidat, Validation, Entretien, Evaluation_Candidat, Onboarding, Onboarding_Tache, Document). Toute modification va dans Figma **et** dans ce fichier.
+- [ ] **T-03** (15 min) Trancher le **circuit du besoin** (Finance seule ou Finance + Direction, section 3), ajouter « terminé » à Statut_Contrat ou non, confirmer la **liste des rôles** du userflow, puis valider statuts (section 3) et droits (section 4).
 - [ ] **T-04** (10 min) Valider le **contrat d'interface** (section 7) : URL, noms des templates, convention des noms de données.
 - [ ] **T-05** (10 min) Décisions techniques, à écrire dans ce fichier :
   - [ ] base de données en développement : **H2 en fichier** conseillé (rien à installer, personne n'est bloqué) ; **PostgreSQL** pour la démo finale si le temps le permet ;
@@ -296,14 +335,14 @@ Ce tableau est **l'accord entre Back et Front**. Le Back crée le contrôleur de
 
 Pour ne pas avoir à se mettre d'accord écran par écran :
 
-- une **liste** d'objets porte le nom de l'objet **au pluriel**, en minuscules : `demandes`, `offres`, `candidatures`, `employes`… ;
-- **un** objet porte le nom **au singulier** : `demande`, `offre`, `candidature`, `employe`… ;
+- une **liste** d'objets porte le nom de l'objet **au pluriel**, en minuscules : `besoins`, `offres`, `candidatures`, `employes`… ;
+- **un** objet porte le nom **au singulier** : `besoin`, `offre`, `candidature`, `employe`… ;
 - l'objet d'un **formulaire** s'appelle toujours `formulaire` ;
 - les **actions autorisées** pour l'utilisateur sur l'objet affiché s'appellent toujours `actionsPossibles` (liste de codes : `SOUMETTRE`, `VALIDER`, `REFUSER`…) ;
 - les **listes pour les menus déroulants** portent le nom de l'objet au pluriel (`departements`, `postes`, `typesContrat`…) ;
 - l'**utilisateur connecté** et ses rôles sont disponibles sur **toutes** les pages (fourni par BK0) ;
 - le **message flash** après une action s'appelle `succes` ou `erreur` ;
-- les champs d'un objet portent **exactement** les noms de la section 2 (sans accents, première lettre en minuscule : `dateSouhaitee`, `effectif`, `motif`…).
+- les champs d'un objet portent **exactement** les noms du MCD (section 2), écrits sans accents ni tirets bas, première lettre en minuscule : `libelle`, `matricule`, `estOccupe`, `dateModification`…
 
 ### 7.2 Liste des écrans
 
@@ -313,26 +352,28 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 
 | Écran | URL | Template | Prio |
 |---|---|---|---|
-| Connexion | `/connexion` | `auth/connexion` | P1 |
-| Accueil (tableau de bord par rôle) | `/` | `dashboard/accueil` | P1 simple / P2 complet |
+| **Accueil public** (à propos de l'entreprise + liste des offres) | `/` (non connecté) | `public/accueil` | P1 |
+| Connexion (choix employé : matricule + mot de passe / candidat : identifiant + mot de passe) | `/connexion` | `auth/connexion` | P1 |
+| Créer un compte candidat | `/inscription` | `auth/inscription` | P1 |
+| Accueil connecté (tableau de bord par rôle) | `/tableau-de-bord` | `dashboard/accueil` | P1 simple / P2 complet |
 | Erreurs | — | `erreurs/403`, `erreurs/404`, `erreurs/500` | P1 |
 | Téléchargement d'un document | `/documents/{id}` | — (fichier) | P1 |
 | Notifications | `/notifications` | `notifications/liste` | P2 |
 | Journal d'audit | `/admin/audit` | `admin/audit` | P3 |
-| Utilisateurs | `/admin/utilisateurs` | `admin/utilisateurs` | P3 |
+| Comptes | `/admin/comptes` | `admin/comptes` | P3 |
 
 #### Bloc 1 (BK1 ↔ FR0)
 
 | Écran | URL | Template | Prio |
 |---|---|---|---|
-| Liste des demandes (filtre « mes demandes » / « à valider » selon le rôle) | `/demandes` | `demandes/liste` | P1 |
-| Nouvelle demande / modifier un brouillon | `/demandes/nouvelle`, `/demandes/{id}/modifier` | `demandes/formulaire` | P1 |
-| Détail d'une demande | `/demandes/{id}` | `demandes/detail` | P1 |
-| Actions | `/demandes/{id}/soumettre`, `…/valider`, `…/refuser`, `…/completer`, `…/annuler`, `…/ouvrir-recrutement` | — | P1 |
+| Liste des besoins (filtre « mes besoins » / « à traiter » selon le rôle) | `/besoins` | `besoins/liste` | P1 |
+| Nouveau besoin / modifier (type : création poste ou recherche personnel) | `/besoins/nouveau`, `/besoins/{id}/modifier` | `besoins/formulaire` | P1 |
+| Détail d'un besoin | `/besoins/{id}` | `besoins/detail` | P1 |
+| Actions | `/besoins/{id}/envoyer-rh`, `…/envoyer-finance`, `…/valider`, `…/refuser`, `…/completer`, `…/annuler`, `…/ouvrir-recrutement` | — | P1 |
 | Liste des postes | `/postes` | `postes/liste` | P1 |
 | Fiche poste (avec historique des titulaires) | `/postes/{id}` | `postes/detail` | P2 |
 | Créer / modifier un poste | `/postes/nouveau`, `/postes/{id}/modifier` | `postes/formulaire` | P2 |
-| Liste et fiche des départements | `/departements`, `/departements/{id}` | `departements/liste`, `departements/detail` | P2 |
+| Liste et fiche des départements (avec leurs services) | `/departements`, `/departements/{id}` | `departements/liste`, `departements/detail` | P2 |
 
 #### Bloc 2 (BK2 ↔ FR1)
 
@@ -345,6 +386,8 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 | **Public** : liste des offres | `/carrieres` | `public/offres` | P1 |
 | **Public** : détail + formulaire « Postuler » | `/carrieres/{id}` (envoi vers `/carrieres/{id}/postuler`) | `public/offre-detail` | P1 |
 | **Public** : confirmation | `/carrieres/merci` | `public/confirmation` | P1 |
+| **Espace candidat** : mes candidatures et leur statut | `/espace-candidat` | `espace-candidat/candidatures` | P1 |
+| **Espace candidat** : répondre à une proposition | `/espace-candidat/propositions/{id}` | `espace-candidat/proposition` | P2 |
 | Candidatures d'une offre (tableau) | `/offres/{id}/candidatures` | `candidatures/liste` | P1 |
 | Candidatures en vue Kanban | `/offres/{id}/candidatures?vue=kanban` | `candidatures/kanban` | P3 |
 | Fiche candidature | `/candidatures/{id}` | `candidatures/detail` | P1 |
@@ -360,16 +403,16 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 | Écran | URL | Template | Prio |
 |---|---|---|---|
 | Créer une proposition d'embauche | `/candidatures/{id}/proposition` | `propositions/formulaire` | P1 |
-| Détail d'une proposition (+ boutons réponse du candidat) | `/propositions/{id}` | `propositions/detail` | P1 |
+| Détail d'une proposition (+ boutons réponse, saisie par les RH) | `/propositions/{id}` | `propositions/detail` | P1 |
 | Actions proposition | `/propositions/{id}/envoyer`, `…/accepter`, `…/refuser` | — | P1 |
 | Récapitulatif après acceptation | `/propositions/{id}/recapitulatif` | `propositions/recapitulatif` | P2 (en P1 : redirection vers le dossier salarié) |
 | Liste des employés | `/employes` | `employes/liste` | P1 |
-| Dossier salarié (onglet choisi par `?onglet=identite|contrats|affectations|documents|onboarding`) | `/employes/{id}` | `employes/dossier` | P1 |
-| Nouveau contrat / renouvellement / passage en CDI (`?type=nouveau|renouvellement|cdi`) | `/employes/{id}/contrats/nouveau` | `contrats/formulaire` | P1 |
-| Actions contrat | `/contrats/{id}/signer`, `…/terminer` | — | P1 |
+| Dossier salarié (onglet choisi par `?onglet=identite|contrats|historique|documents|onboarding`) | `/employes/{id}` | `employes/dossier` | P1 |
+| Nouveau contrat / renouvellement / passage CE → CDD → CDI (`?type=nouveau|renouvellement|cdi`) | `/employes/{id}/contrats/nouveau` | `contrats/formulaire` | P1 |
+| Actions contrat | `/contrats/{id}/signer`, `…/valider`, `…/annuler`, `…/rompre` | — | P1 |
 | Checklist d'onboarding | `/onboardings/{id}` | `onboarding/checklist` | P1 |
 | Changer le statut d'une tâche | `/onboarding-taches/{id}/statut` | — | P1 |
-| Changer de poste (nouvelle affectation) | `/employes/{id}/affectations/nouvelle` | `contrats/affectation-formulaire` | P2 |
+| Changer de poste (nouvelle ligne d'historique) | `/employes/{id}/changer-poste` | `employes/changer-poste` | P2 |
 | Mes tâches d'onboarding | `/mes-taches` | `onboarding/mes-taches` | P2 |
 | Modèles de tâches | `/admin/modeles-onboarding` | `onboarding/modeles` | P3 |
 
@@ -387,11 +430,11 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 - [ ] **DS1-02** · P1 · lundi avant midi · dépend de : rien
   **Code couleur des statuts**, le même partout : brouillon (gris), soumis / en attente (bleu), à compléter (orange), validé / accepté / fait (vert), refusé / rejeté (rouge), clôturé / terminé (gris foncé). Le livrer sous forme de tableau « statut → couleur → libellé affiché ».
 - [ ] **DS1-03** · P1 · lundi après-midi · dépend de : DS1-01
-  **Gabarit de page** : en-tête (logo « Mr Tovo », nom et rôle de l'utilisateur, cloche, déconnexion), menu latéral par rôle, zone de contenu. Version ordinateur et mobile (menu repliable). Plus l'écran de **connexion**.
+  **Gabarit de page** : en-tête (logo « Mr Tovo », nom et rôle de l'utilisateur, cloche, déconnexion), menu latéral par rôle, zone de contenu. Version ordinateur et mobile (menu repliable). Plus l'écran de **connexion à deux entrées** comme dans le userflow (employé : matricule + mot de passe / candidat : identifiant + mot de passe) et l'écran **création de compte candidat**.
 - [ ] **DS1-04** · P1 · lundi après-midi · dépend de : rien
-  **Basse fidélité** des écrans P1 du **bloc 1** : liste des demandes, formulaire de demande (la partie poste change entre création et remplacement), détail d'une demande (stepper Manager → RH → Direction → Ouverture, historique des validations, boutons d'action), fenêtre de refus avec commentaire obligatoire, liste des postes.
+  **Basse fidélité** des écrans P1 du **bloc 1**, en suivant le userflow Figma : liste des besoins, formulaire de besoin (type « création poste » ou « recherche personnel » : la partie poste change), détail d'un besoin (stepper Manager → RH → Finance → Ouverture, historique des validations, boutons d'action), fenêtre de refus avec commentaire obligatoire, liste des postes (par département et service, occupé / libre).
 - [ ] **DS1-05** · P1 · lundi fin d'après-midi · dépend de : rien
-  **Basse fidélité** des écrans P1 du **bloc 4** : onglet contrats du dossier salarié (frise des contrats, contrat actif mis en avant), formulaire contrat (date de fin masquée pour un CDI), checklist d'onboarding (tâches par catégorie, responsable, échéance, barre de progression, retards en rouge).
+  **Basse fidélité** des écrans P1 du **bloc 4** : onglet contrats du dossier salarié (frise CE → CDD → CDI, contrat validé mis en avant), onglet historique (postes et contrats successifs), formulaire contrat (date de fin masquée pour un CDI), checklist d'onboarding (tâches par catégorie, responsable, échéance, barre de progression, retards en rouge).
 - [ ] **DS1-06** · P1 · mardi matin · dépend de : DS1-01
   **Composants** (chaque état : normal, survol, désactivé, erreur) : boutons, champs de formulaire avec message d'erreur, badge de statut, tableau avec filtres et pagination, fenêtre de confirmation, messages flash, fil d'Ariane, frise / historique, stepper, barre de progression, état vide.
 - [ ] **DS1-07** · P1 · mardi après-midi · dépend de : DS1-04, DS1-06
@@ -399,26 +442,26 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 - [ ] **DS1-08** · P1 · mercredi matin · dépend de : DS1-05, DS1-06
   **Haute fidélité** des écrans du bloc 4.
 - [ ] **DS1-09** · P2 · mercredi après-midi · dépend de : DS1-06
-  **Tableau de bord** par rôle : Manager (mes demandes, mes arrivées prévues), RH (demandes à valider, offres ouvertes, candidatures à traiter, onboardings en retard, CDD qui finissent), Direction (demandes à valider, nombre d'embauches). Plus le panneau des **notifications**, les pages d'**erreur** 403 / 404 / 500.
+  **Tableau de bord** par rôle : Manager (mes besoins, mes arrivées prévues), RH (besoins à traiter, offres ouvertes, candidatures à traiter, onboardings en retard, contrats qui finissent), Finance (besoins à valider, budget demandé par département). Plus le panneau des **notifications**, les pages d'**erreur** 403 / 404 / 500.
 - [ ] **DS1-10** · P1 · jeudi · dépend de : écrans développés
   **Revue des écrans réels** des pistes FR0 et FR2 : lister les écarts avec les maquettes **par ordre d'importance**, directement dans ce fichier sous la tâche, pour que le Front les corrige jeudi après-midi.
 - [ ] **DS1-11** · P2 · vendredi matin · dépend de : rien
   Schéma de l'**architecture technique** et du **modèle de données** pour la soutenance (version propre et lisible des sections 1 et 2).
 
-### Piste DS2 — Parcours + Blocs 2 et 3 + soutenance
+### Piste DS2 — Userflow + MCD + Blocs 2 et 3 + soutenance
 
 - [ ] **DS2-01** · P1 · lundi 10h30-12h · dépend de : rien
-  **Personas** (Manager, RH, Direction, nouvel employé, candidat externe) en une fiche courte chacun, et **schéma du parcours global** : besoin → validation → offre → candidature → entretiens → proposition → embauche → contrat → onboarding, avec le rôle qui agit à chaque étape. Ce schéma servira aussi pour la soutenance.
+  **Finir le board Figma** (le userflow existe déjà) avec une personne de chaque piste Back : compléter le **MCD** (T-02), corriger Candidature (elle doit pointer vers Candidat et Offre, pas vers Employe), ajouter les objets manquants, reporter les décisions de T-03 dans le userflow. Puis **exporter le board en PNG haute résolution** (ou une image par partie) et le partager : c'est la référence de toute l'équipe. En plus : une fiche persona courte par rôle (Candidat, Manager, RH, Finance, nouvel employé).
 - [ ] **DS2-02** · P1 · lundi après-midi · dépend de : rien
-  **Basse fidélité** des écrans P1 du **bloc 2** : liste des offres (RH), détail / modification d'une offre, **page carrières publique** (liste, détail, formulaire « Postuler » avec CV, confirmation), liste des candidatures d'une offre, fiche candidature (CV, statut, entretiens, évaluations, boutons), formulaire d'entretien, formulaire d'évaluation.
+  **Basse fidélité** des écrans P1 du **bloc 2**, en suivant le userflow : **accueil public** (à propos de l'entreprise + liste des offres), liste des offres avec filtre, détail d'une offre, bouton « Candidater » → connexion ou création de compte candidat → formulaire de candidature avec CV → confirmation, **espace candidat** (mes candidatures et leur statut), côté RH : liste des offres, détail / modification, liste des candidatures d'une offre, fiche candidature, formulaire d'entretien, formulaire d'évaluation.
 - [ ] **DS2-03** · P1 · lundi fin d'après-midi · dépend de : rien
-  **Basse fidélité** des écrans P1 du **bloc 3** : formulaire de proposition d'embauche, détail de la proposition avec les boutons « le candidat accepte / refuse », liste des employés, **dossier salarié en onglets** (Identité · Contrats · Affectations · Documents · Onboarding · Origine).
+  **Basse fidélité** des écrans P1 du **bloc 3** : formulaire de proposition d'embauche, détail de la proposition avec les boutons « le candidat accepte / refuse », liste des employés, **dossier salarié en onglets** (Identité · Contrats · Historiqueations · Documents · Onboarding · Origine).
 - [ ] **DS2-04** · P1 · mardi · dépend de : DS1-06, DS2-02
   **Haute fidélité** du bloc 2, en commençant par la **page carrières publique** (c'est la vitrine, elle doit être très soignée et parfaite sur mobile).
 - [ ] **DS2-05** · P1 · mercredi matin · dépend de : DS1-06, DS2-03
   **Haute fidélité** du bloc 3.
 - [ ] **DS2-06** · P2 · mercredi après-midi · dépend de : DS2-04
-  Écrans P2 : fiche candidat (toutes ses candidatures), comparaison des évaluations des candidats d'une offre, récapitulatif après acceptation (matricule, contrat, affectation, onboarding créés).
+  Écrans P2 : fiche candidat (toutes ses candidatures), comparaison des évaluations des candidats d'une offre, récapitulatif après acceptation (matricule, contrat, historique, onboarding créés), réponse à la proposition depuis l'espace candidat.
 - [ ] **DS2-07** · P1 · jeudi · dépend de : écrans développés
   **Revue des écrans réels** des pistes FR1 et FR2 (comme DS1-10) **et test utilisateur** : faire faire le scénario complet à 2 personnes extérieures, noter où elles hésitent.
 - [ ] **DS2-08** · P1 · jeudi après-midi → vendredi · dépend de : DS2-01
@@ -441,11 +484,11 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
   - [ ] classe de base commune aux entités (identifiant, dates de création / modification, auteur) ;
   - [ ] **sécurité ouverte temporairement** (tout est accessible) pour que personne ne soit bloqué par la connexion lundi.
 - [ ] **BK0-02** · P1 · lundi 13h30-16h · dépend de : BK0-01
-  Entités **Utilisateur**, **Rôle**, **Notification**, **Document**, **JournalAudit** + mécanisme de **données de démo** (un fichier par domaine, chargé au démarrage en `dev` uniquement) + les comptes de démo (un par rôle : admin, rh, direction, manager1, manager2, employe).
+  Entités **Compte** (relié à un Employe **ou** à un Candidat), **Rôle**, **Notification**, **Document**, **Journal_Audit** + mécanisme de **données de démo** (un fichier par domaine, chargé au démarrage en `dev` uniquement) + **valeurs des tables de référence** (Statut_… et Type_… de la section 2) + comptes de démo : admin, rh, finance, manager1, manager2, un employé (connexion par matricule), candidat1.
 - [ ] **BK0-03** · P1 · lundi 16h-18h · dépend de : BK0-01
   **Moteur de statuts commun** : une façon unique, utilisée par BK1, BK2 et BK3, de déclarer pour un objet « depuis tel statut, vers tel statut, par tel rôle, à telle condition », de refuser toute transition non prévue avec un message clair, et de donner la liste des **actions possibles** pour l'utilisateur connecté (`actionsPossibles`, section 7.1). Expliquer en 5 lignes dans le README comment l'utiliser. **À livrer lundi soir**, c'est ce qui permet aux autres pistes de coder leurs workflows dès mardi.
 - [ ] **BK0-04** · P1 · mardi matin · dépend de : BK0-02
-  **Connexion / déconnexion** avec la page `/connexion`, mots de passe chiffrés, utilisateur connecté et rôles disponibles sur toutes les pages. Puis **fermer la sécurité** : protéger les URL par rôle (section 4), laisser publics `/connexion`, `/carrieres/**`, le CSS, le JS et les images. Prévenir tout le monde au moment où la sécurité est activée.
+  **Connexion / déconnexion à deux entrées** comme dans le userflow : employé (matricule + mot de passe) et candidat (identifiant + mot de passe), plus **création de compte candidat** (`/inscription`). Mots de passe chiffrés, compte connecté et rôles disponibles sur toutes les pages. Puis **fermer la sécurité** : protéger les URL par rôle (section 4), laisser publics `/`, `/connexion`, `/inscription`, `/carrieres/**`, le CSS, le JS et les images. Prévenir tout le monde au moment où la sécurité est activée.
 - [ ] **BK0-05** · P1 · mardi après-midi · dépend de : BK0-02
   **Stockage des fichiers** (GED) : enregistrement dans un dossier configuré (hors du dépôt Git), nom de fichier unique, formats autorisés (PDF, images, Word), taille max 5 Mo, téléchargement par `/documents/{id}` réservé aux personnes autorisées. Service simple que BK2 et BK3 appellent.
 - [ ] **BK0-06** · P1 · mardi après-midi · dépend de : BK0-01
@@ -455,42 +498,42 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 - [ ] **BK0-08** · P2 · mercredi après-midi · dépend de : BK0-03
   **Journal d'audit** automatique à chaque changement de statut (branché dans le moteur de statuts, donc rien à faire pour les autres pistes).
 - [ ] **BK0-09** · P1 simple / P2 complet · jeudi matin · dépend de : entités des autres pistes
-  **Tableau de bord** `/` : chiffres clés par rôle (demandes par statut, offres ouvertes, candidatures à traiter, onboardings en cours / en retard, CDD qui finissent dans 30 jours).
+  **Tableau de bord** `/tableau-de-bord` : chiffres clés par rôle (besoins par statut, offres ouvertes, candidatures à traiter, onboardings en cours / en retard, contrats qui finissent dans 30 jours, budget demandé pour la Finance).
 - [ ] **BK0-10** · P1 · jeudi après-midi · dépend de : tout
   **Relecture sécurité** : chaque URL testée avec chaque rôle, upload de fichiers, aucune donnée sensible dans les logs. Puis aide à la correction des bugs du scénario (T-10).
-- [ ] **BK0-11** · P3 · si temps · Utilisateurs (`/admin/utilisateurs`), page d'audit, envoi d'e-mails simulé dans les logs, tâche quotidienne (clôture des offres expirées, propositions expirées, alertes fin de CDD).
+- [ ] **BK0-11** · P3 · si temps · Gestion des comptes (`/admin/comptes`), page d'audit, envoi d'e-mails simulé dans les logs, tâche quotidienne (clôture des offres expirées, propositions expirées, alertes fin de contrat).
 - [ ] **BK0-12** · P1 · vendredi matin · Mettre à jour le `README.md` : lancement, comptes de démo, profils.
 
 ### Piste BK1 — Bloc 1 : Besoin en personnel
 
 - [ ] **BK1-01** · P1 · lundi 13h30-16h · dépend de : BK0-01
-  Entités **Département**, **Poste**, **DemandeRecrutement**, **Validation** avec tous les champs et liens de la section 2 et leurs statuts. Poussées **avant 16h**.
+  Entités **Departement**, **Service**, **Poste**, **Besoin**, **Type_Besoin**, **Statut_Besoin**, **Validation** avec les champs du MCD (section 2) et les ajouts décidés en T-02. Poussées **avant 16h**.
 - [ ] **BK1-02** · P1 · lundi 16h-18h · dépend de : BK1-01
-  **Données de démo** du domaine : 4 départements (Finance, Informatique, Commercial, RH), une quinzaine de postes (certains vacants, certains occupés), 4 demandes à des statuts différents.
+  **Données de démo** du domaine : 4 départements (Finance, Informatique, Commercial, RH) avec 2 services chacun, une quinzaine de postes (ex. Développeur junior 1, Développeur junior 2, Chef de projet, Chef de service avec `estManager` = oui ; certains occupés, d'autres libres), 4 besoins à des statuts différents.
 - [ ] **BK1-03** · P1 · mardi matin · dépend de : BK1-01
-  Pages **postes** (liste avec filtre département / statut) et contrôleurs **demandes** en lecture : liste (le manager voit les demandes de son département, RH et Direction voient tout) et détail avec l'historique des validations.
+  Pages **postes** (liste avec filtre département / service / occupé) et contrôleurs **besoins** en lecture : liste (le manager voit les besoins de son département, RH et Finance voient tout) et détail avec l'historique des validations.
 - [ ] **BK1-04** · P1 · mardi après-midi · dépend de : BK0-03
-  **Créer et modifier une demande** : brouillon, validation du formulaire (effectif ≥ 1, date souhaitée dans le futur, budget positif, motif obligatoire). Création de poste : le poste est créé au statut « gelé ». Remplacement : le poste choisi doit exister.
+  **Créer et modifier un besoin** : validation du formulaire (effectif ≥ 1, date souhaitée dans le futur, budget positif, motif obligatoire). Type « création poste » : le poste est créé avec `estActif` = non et `estOccupe` = non, il devient actif à l'ouverture du recrutement. Type « recherche personnel » : on choisit un poste existant et libre.
 - [ ] **BK1-05** · P1 · mercredi matin · dépend de : BK0-03
-  **Workflow de la demande** (section 3) avec le moteur de statuts : soumettre, valider RH, valider Direction, refuser (commentaire obligatoire), demander un complément, annuler. Chaque décision crée une **Validation**. `actionsPossibles` fourni à la page de détail.
+  **Workflow du besoin** (section 3, tel que tranché en T-03) avec le moteur de statuts : envoyer aux RH, envoyer à la Finance, retour Finance validé / refusé (commentaire obligatoire), demander un complément, annuler. Chaque décision crée une **Validation**. `actionsPossibles` fourni à la page de détail.
 - [ ] **BK1-06** · P1 · mercredi après-midi · dépend de : entités de BK2 (lundi 16h)
-  **Ouverture du recrutement** : passe la demande à « recrutement ouvert », passe le poste à « vacant », crée une **OffreEmploi en brouillon** pré-remplie (titre = intitulé du poste, description, type de contrat). Se mettre d'accord avec BK2 sur ce pré-remplissage au point de 13h30.
+  **Ouverture du recrutement** : passe le besoin à « recrutement ouvert », passe le poste à `estActif` = oui, crée une **Offre en brouillon** pré-remplie (titre = libellé du poste, département, type de contrat). Se mettre d'accord avec BK2 sur ce pré-remplissage au point de 13h30.
 - [ ] **BK1-07** · P2 · mercredi après-midi · dépend de : BK0-07
-  Notifications : demande soumise → RH ; validée RH → Direction ; décision finale → manager auteur.
+  Notifications : besoin envoyé aux RH → RH ; envoyé à la Finance → Finance ; retour Finance → manager auteur et RH.
 - [ ] **BK1-08** · P1 · jeudi matin · dépend de : BK1-05
-  **Tests** : chaque transition autorisée fonctionne, chaque transition interdite est refusée (ex. la Direction ne peut pas valider avant les RH, un manager ne peut pas valider), un manager ne voit pas les demandes d'un autre département.
-- [ ] **BK1-09** · P2 · jeudi · Fiche poste avec historique des titulaires (via les affectations de BK3), CRUD postes et départements.
+  **Tests** : chaque transition autorisée fonctionne, chaque transition interdite est refusée (ex. la Finance ne peut pas valider avant les RH, un manager ne peut pas valider), un manager ne voit pas les besoins d'un autre département.
+- [ ] **BK1-09** · P2 · jeudi · Fiche poste avec historique des titulaires (via Historique_Employe de BK3), CRUD postes, services et départements.
 
 ### Piste BK2 — Bloc 2 : Recrutement
 
 - [ ] **BK2-01** · P1 · lundi 13h30-16h · dépend de : BK0-01
-  Entités **OffreEmploi**, **Candidat**, **Candidature**, **Entretien**, **ÉvaluationCandidat** avec leurs statuts. Poussées **avant 16h**.
+  Entités **Offre**, **Statut_Offre**, **Candidat** (relié à son Compte), **Candidature**, **Statut_Candidature**, **Entretien**, **Evaluation_Candidat**, avec les champs complétés en T-02. Poussées **avant 16h**.
 - [ ] **BK2-02** · P1 · lundi 16h-18h · dépend de : BK2-01, BK1-01
-  **Données de démo** : 2 offres publiées (liées à des demandes ouvertes de BK1), une dizaine de candidats dont **un qui a postulé à deux offres**, des candidatures à différents statuts, quelques entretiens et évaluations.
+  **Données de démo** : 2 offres publiées (liées à des besoins ouverts de BK1), une dizaine de candidats avec compte dont **un qui a postulé à deux offres**, des candidatures à différents statuts, quelques entretiens et évaluations.
 - [ ] **BK2-03** · P1 · mardi matin · dépend de : BK2-01
   **Offres côté RH** : liste, détail, modification d'un brouillon, publier, clôturer, annuler (avec le moteur de statuts dès qu'il est livré).
 - [ ] **BK2-04** · P1 · mardi après-midi · dépend de : BK0-05 (fichiers) — en attendant, enregistrer la candidature sans le fichier
-  **Candidature publique** `/carrieres` : seules les offres publiées et non expirées sont visibles ; formulaire « Postuler » avec CV ; **si l'e-mail existe déjà, on réutilise le même Candidat** (une personne = un candidat, plusieurs candidatures) ; on refuse une deuxième candidature à la même offre ; redirection vers `/carrieres/merci`.
+  **Candidature** comme dans le userflow : les offres publiées et non expirées sont visibles **sans connexion** (`/` et `/carrieres`) ; le bouton « Candidater » demande de se **connecter ou de créer un compte candidat** ; formulaire avec CV ; **un compte = un candidat** qui peut avoir plusieurs candidatures ; on refuse une deuxième candidature à la même offre ; redirection vers `/carrieres/merci`. Plus l'**espace candidat** `/espace-candidat` : la liste de ses candidatures avec leur statut.
 - [ ] **BK2-05** · P1 · mercredi matin · dépend de : BK0-03
   **Workflow de la candidature** : présélectionner, rejeter (motif obligatoire), passer en entretien (automatique au premier entretien planifié), retenir. Liste des candidatures d'une offre et fiche candidature avec `actionsPossibles`.
 - [ ] **BK2-06** · P1 · mercredi après-midi · dépend de : BK2-05
@@ -503,34 +546,34 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 ### Piste BK3 — Blocs 3 et 4 : Embauche, contrat, onboarding
 
 - [ ] **BK3-01** · P1 · lundi 13h30-16h · dépend de : BK0-01
-  Entités **PropositionEmbauche**, **Employé**, **Contrat**, **Affectation**, **Onboarding**, **OnboardingTâche**, **ModèleTâcheOnboarding** avec leurs statuts. Le contrat peut pointer vers le contrat précédent. **Le type de contrat n'est pas un champ de l'employé.** Poussées **avant 16h**.
+  Entités **Proposition**, **Statut_Proposition**, **Employe**, **Contrat**, **Statut_Contrat**, **Type_Contrat**, **Historique_Employe**, **Onboarding**, **Onboarding_Tache**, avec les champs du MCD et les ajouts de T-02. `Id_Poste (actuel)` et `Id_Contrat (actuel)` de l'employé ne sont qu'un raccourci : **le vrai historique est dans Contrat et Historique_Employe**. Poussées **avant 16h**.
 - [ ] **BK3-02** · P1 · lundi 16h-18h · dépend de : BK3-01
-  **Données de démo** : les 6 modèles de tâches par défaut (contrat signé, badge, compte informatique, matériel, formation d'accueil, inscription paie) ; 3 employés dont **un avec l'historique CDD → renouvellement → CDI** ; un onboarding en cours à moitié fait.
+  **Données de démo** : les 6 tâches d'onboarding par défaut (contrat signé, badge, compte informatique, matériel, formation d'accueil, inscription paie) ; 3 employés dont **un avec l'historique CE → CDD → CDI** (3 contrats et 3 lignes d'Historique_Employe) ; un onboarding en cours à moitié fait.
 - [ ] **BK3-03** · P1 · mardi matin · dépend de : BK3-01
-  **Employés** : liste (recherche par nom ou matricule) et **dossier salarié** avec les données de chaque onglet (identité, contrats, affectations, documents, onboarding, candidature d'origine). Le « contrat actuel » est **calculé** à partir du contrat actif.
+  **Employés** : liste (recherche par nom ou matricule) et **dossier salarié** avec les données de chaque onglet (identité, contrats, historique, documents, onboarding, candidature d'origine).
 - [ ] **BK3-04** · P1 · mardi après-midi · dépend de : BK3-01
   **Contrats** :
-  - [ ] nouveau contrat, signer, terminer (motif) ;
+  - [ ] nouveau contrat (statut « créé »), signer, valider, annuler, rompre (motif obligatoire), selon la section 3 ;
   - [ ] **renouvellement** et **passage en CDI** = un **nouveau** contrat pré-rempli et lié au précédent, l'ancien passe à « terminé » ;
   - [ ] un contrat signé n'est plus modifiable ;
-  - [ ] un seul contrat actif par employé, pas de chevauchement de dates ;
-  - [ ] CDD : date de fin obligatoire ; CDI : pas de date de fin.
+  - [ ] un seul contrat « validé » par employé, pas de chevauchement de dates ; à chaque nouveau contrat, mettre à jour `Id_Contrat (actuel)` **et** ajouter une ligne dans Historique_Employe ;
+  - [ ] CE et CDD : date de fin obligatoire ; CDI : pas de date de fin.
 - [ ] **BK3-05** · P1 · mercredi matin · dépend de : BK0-03, entités BK2
   **Proposition d'embauche** : créer pour une candidature **retenue** uniquement, envoyer, enregistrer la réponse (accepte / refuse avec motif). Génération du **matricule** (format décidé en T-05, unique, jamais réutilisé).
 - [ ] **BK3-06** · P1 · mercredi après-midi · dépend de : BK3-04, BK3-05
   **Processus d'embauche** déclenché par l'acceptation, **tout ou rien** (si une étape échoue, rien n'est créé) :
-  - [ ] création de l'**Employé** avec matricule et lien vers le Candidat d'origine ;
-  - [ ] **Contrat** en brouillon (type, salaire, date de début de la proposition) ;
-  - [ ] **Affectation** sur le poste de l'offre, poste → « occupé » ;
+  - [ ] création de l'**Employe** avec matricule et lien vers le Candidat d'origine (le compte candidat est relié à l'employé) ;
+  - [ ] **Contrat** au statut « créé » (type CE, CDD ou CDI, salaire, date de début de la proposition) ;
+  - [ ] Poste de l'offre → `estOccupe` = oui ; `Id_Poste` et `Id_Contrat` actuels de l'employé remplis ; **une ligne dans Historique_Employe** ;
   - [ ] **Onboarding** avec les tâches générées depuis les modèles (échéance = date d'arrivée + délai du modèle) ;
-  - [ ] candidature → « embauché », offre → « pourvue » si l'effectif est atteint ;
+  - [ ] candidature → « embauchée », offre → « pourvue » si l'effectif est atteint ;
   - [ ] redirection vers le dossier salarié (ou le récapitulatif en P2).
 - [ ] **BK3-07** · P1 · jeudi matin · dépend de : BK3-06
   **Onboarding** : changer le statut d'une tâche (seuls le responsable et les RH), calcul de la progression, **fin automatique** quand toutes les tâches obligatoires sont « fait » ou « non applicable ». La tâche « contrat signé » ne peut être cochée que si le contrat est signé.
 - [ ] **BK3-08** · P1 · jeudi matin · dépend de : BK3-04, BK3-06
-  **Tests** : le scénario d'acceptation crée bien tous les objets ; un échec au milieu ne laisse rien à moitié ; CDD → renouvellement → CDI garde les 3 contrats ; chevauchement refusé ; matricule unique ; un employé ne voit que son propre dossier.
-- [ ] **BK3-09** · P2 · jeudi · Récapitulatif après acceptation, changement de poste (clôture de l'affectation en cours + nouvelle), justificatifs sur les tâches (via BK0-05), page « mes tâches d'onboarding », notifications (proposition acceptée → RH et manager, tâche assignée → responsable).
-- [ ] **BK3-10** · P3 · si temps · Gestion des modèles de tâches par les RH, alerte de fin de CDD.
+  **Tests** : le scénario d'acceptation crée bien tous les objets ; un échec au milieu ne laisse rien à moitié ; CE → CDD → CDI garde les 3 contrats et 3 lignes d'historique ; chevauchement refusé ; matricule unique ; un employé ne voit que son propre dossier.
+- [ ] **BK3-09** · P2 · jeudi · Récapitulatif après acceptation, changement de poste (ancien poste `estOccupe` = non, nouveau = oui, nouvelle ligne d'Historique_Employe), justificatifs sur les tâches (via BK0-05), réponse à la proposition depuis l'espace candidat, page « mes tâches d'onboarding », notifications (proposition acceptée → RH et manager, tâche assignée → responsable).
+- [ ] **BK3-10** · P3 · si temps · Modèles de tâches d'onboarding modifiables par les RH, alerte de fin de contrat.
 
 ---
 
@@ -550,9 +593,9 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 - [ ] **FR0-03** · P1 · lundi fin d'après-midi · dépend de : FR0-02
   Fragments **frise / historique**, **stepper** et **barre de progression** (utilisés par FR0, FR1 et FR2).
 - [ ] **FR0-04** · P1 · mardi matin · dépend de : rien
-  Page de **connexion** (erreur si identifiants faux, message après déconnexion) et pages d'**erreur** 403 / 404 / 500.
+  Page de **connexion à deux entrées** (employé : matricule / candidat : identifiant, erreur si identifiants faux, message après déconnexion), page **création de compte candidat**, pages d'**erreur** 403 / 404 / 500.
 - [ ] **FR0-05** · P1 · mardi · dépend de : DS1-04 (basse fidélité)
-  **Pages du bloc 1** : liste des demandes avec filtres et badges, formulaire de demande (la partie poste s'affiche selon création / remplacement, petit script), détail avec stepper et historique des validations, fenêtre de refus / complément avec commentaire obligatoire, liste des postes.
+  **Pages du bloc 1** : liste des besoins avec filtres et badges, formulaire de besoin (la partie poste s'affiche selon « création poste » / « recherche personnel », petit script), détail avec stepper et historique des validations, fenêtre de refus / complément avec commentaire obligatoire, liste des postes.
 - [ ] **FR0-06** · P1 · mardi fin de journée · dépend de : BK0-04
   **Menu par rôle** (chaque rôle ne voit que ses entrées, section 4), nom et rôle de l'utilisateur dans l'en-tête, déconnexion.
 - [ ] **FR0-07** · P1 · mercredi matin · dépend de : BK1-03, BK1-04
@@ -569,7 +612,7 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 ### Piste FR1 — Bloc 2 + pages publiques
 
 - [ ] **FR1-01** · P1 · lundi 10h30-12h · dépend de : rien
-  Pendant que FR0 fait le gabarit : **structure HTML des pages publiques** (liste des offres, détail + formulaire « Postuler », confirmation) avec des données d'exemple. Ces pages ont leur **propre gabarit public** (logo, sans menu interne) dans le dossier `public/`.
+  Pendant que FR0 fait le gabarit : **structure HTML des pages publiques** du userflow (accueil avec « À propos de l'entreprise » et liste des offres, liste avec filtre, détail + bouton « Candidater », formulaire de candidature, confirmation) avec des données d'exemple. Ces pages ont leur **propre gabarit public** (logo, sans menu interne) dans le dossier `public/`.
 - [ ] **FR1-02** · P1 · lundi après-midi · dépend de : FR0-01
   **Pages RH des offres** : liste avec statut et nombre de candidatures, détail, formulaire de modification.
 - [ ] **FR1-03** · P1 · mardi matin · dépend de : FR0-02, DS2-02
@@ -584,19 +627,21 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
   **Brancher** entretiens et évaluations, afficher les erreurs de validation renvoyées par le Back.
 - [ ] **FR1-08** · P1 · jeudi après-midi · dépend de : DS2-07
   Corrections du Design, test responsive des pages du bloc 2.
+- [ ] **FR1-11** · P1 · mercredi après-midi · dépend de : DS2-02 (puis BK2-04 pour le branchement)
+  **Espace candidat** : page « mes candidatures » (offre, date, badge de statut), lien vers l'offre, message si aucune candidature. Le bouton « Candidater » d'une offre renvoie vers la connexion / création de compte si le candidat n'est pas connecté, puis revient sur le formulaire.
 - [ ] **FR1-09** · P2 · si temps · Fiche candidat (toutes ses candidatures), page de comparaison des candidats d'une offre.
 - [ ] **FR1-10** · P3 · si temps · Vue Kanban des candidatures, agenda des entretiens.
 
 ### Piste FR2 — Blocs 3 et 4
 
 - [ ] **FR2-01** · P1 · lundi 10h30-12h · dépend de : rien
-  Pendant que FR0 fait le gabarit : **structure HTML du dossier salarié** en onglets (Identité · Contrats · Affectations · Documents · Onboarding · Origine) avec des données d'exemple ; l'onglet affiché dépend du paramètre `onglet` de l'URL.
+  Pendant que FR0 fait le gabarit : **structure HTML du dossier salarié** en onglets (Identité · Contrats · Historique · Documents · Onboarding · Origine) avec des données d'exemple ; l'onglet affiché dépend du paramètre `onglet` de l'URL.
 - [ ] **FR2-02** · P1 · lundi après-midi · dépend de : FR0-01
   **Liste des employés** (recherche par nom ou matricule, filtres département / statut).
 - [ ] **FR2-03** · P1 · mardi matin · dépend de : FR0-03, DS1-05
-  **Onglet Contrats** : frise de tous les contrats (CDD → renouvellement → CDI), contrat actif mis en avant, badge de statut. **Formulaire contrat** pour les 3 cas (nouveau, renouvellement, CDI) : pré-rempli depuis le contrat précédent, date de fin masquée pour un CDI et obligatoire pour un CDD.
+  **Onglet Contrats** : frise de tous les contrats (CE → CDD → CDI), contrat validé mis en avant, badge de statut (créé, signé, validé, annulé, rompu). **Formulaire contrat** pour les 3 cas (nouveau, renouvellement, CDI) : pré-rempli depuis le contrat précédent, date de fin masquée pour un CDI et obligatoire pour un CE ou un CDD.
 - [ ] **FR2-04** · P1 · mardi après-midi · dépend de : FR0-03, DS1-05
-  **Checklist d'onboarding** : tâches groupées par catégorie, responsable, échéance, statut modifiable, barre de progression, tâches en retard en rouge. Plus l'onglet **Affectations** (historique des postes).
+  **Checklist d'onboarding** : tâches groupées par catégorie, responsable, échéance, statut modifiable, barre de progression, tâches en retard en rouge. Plus l'onglet **Historique** (postes et contrats successifs, lignes d'Historique_Employe).
 - [ ] **FR2-05** · P1 · mardi fin de journée · dépend de : DS2-03
   **Proposition d'embauche** : formulaire (salaire, date de début, type de contrat, date limite de réponse) et page de détail avec les boutons « le candidat accepte » / « le candidat refuse » (motif).
 - [ ] **FR2-06** · P1 · mercredi · dépend de : BK3-03, BK3-04
@@ -616,25 +661,25 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 
 | | Design (DS1 · DS2) | Back (BK0 · BK1 · BK2 · BK3) | Front (FR0 · FR1 · FR2) |
 |---|---|---|---|
-| **Lundi 19** | 9h-10h30 lancement commun (section 6) · DS1 : **mini-charte + couleurs des statuts avant midi**, gabarit, basse fidélité blocs 1 et 4 · DS2 : personas + parcours, basse fidélité blocs 2 et 3 · **18h : basse fidélité de tous les écrans P1 partagée** | 9h-10h30 lancement · BK0 : **socle avant midi**, utilisateurs + données de démo, **moteur de statuts le soir** · BK1/BK2/BK3 : **entités avant 16h**, puis données de démo | 9h-10h30 lancement · FR0 : **gabarit avant midi**, charte + fragments · FR1 : pages publiques en statique, puis pages offres · FR2 : dossier salarié en statique, puis liste des employés |
-| **Mardi 20** | DS1 : composants, haute fidélité bloc 1 · DS2 : haute fidélité bloc 2 (page carrières d'abord) | BK0 : **connexion + sécurité activée (prévenir tout le monde)**, fichiers, erreurs · BK1 : postes, demandes (lecture, création) · BK2 : offres, candidature publique · BK3 : employés, dossier, contrats | FR0 : connexion, erreurs, pages bloc 1, menu par rôle · FR1 : candidatures, entretiens, évaluations, page carrières finale · FR2 : contrats, onboarding, proposition |
-| **Mercredi 21** | DS1 : haute fidélité bloc 4, tableau de bord · DS2 : haute fidélité bloc 3, écrans P2 | BK0 : notifications, audit · BK1 : workflow de la demande, ouverture du recrutement → offre · BK2 : workflow candidature, entretiens, évaluations · BK3 : proposition, matricule, **processus d'embauche** | **Branchement** de toutes les pages déjà prêtes · FR0 : formats français, tableau de bord |
+| **Lundi 19** | 9h-10h30 lancement commun (section 6) · DS1 : **mini-charte + couleurs des statuts avant midi**, gabarit, basse fidélité blocs 1 et 4 · DS2 : **compléter le MCD et le userflow Figma** avec le Back, export PNG partagé, basse fidélité blocs 2 et 3 (accueil public, espace candidat) · **18h : basse fidélité de tous les écrans P1 partagée** | 9h-10h30 lancement · BK0 : **socle avant midi**, utilisateurs + données de démo, **moteur de statuts le soir** · BK1/BK2/BK3 : **entités avant 16h**, puis données de démo | 9h-10h30 lancement · FR0 : **gabarit avant midi**, charte + fragments · FR1 : pages publiques en statique, puis pages offres · FR2 : dossier salarié en statique, puis liste des employés |
+| **Mardi 20** | DS1 : composants, haute fidélité bloc 1 · DS2 : haute fidélité bloc 2 (page carrières d'abord) | BK0 : **connexion + sécurité activée (prévenir tout le monde)**, fichiers, erreurs · BK1 : postes, besoins (lecture, création) · BK2 : offres, candidature publique · BK3 : employés, dossier, contrats | FR0 : connexion, erreurs, pages bloc 1, menu par rôle · FR1 : candidatures, entretiens, évaluations, page carrières finale · FR2 : contrats, onboarding, proposition |
+| **Mercredi 21** | DS1 : haute fidélité bloc 4, tableau de bord · DS2 : haute fidélité bloc 3, écrans P2 | BK0 : notifications, audit · BK1 : workflow du besoin (RH → Finance), ouverture du recrutement → offre · BK2 : workflow candidature, entretiens, évaluations · BK3 : proposition, matricule, **processus d'embauche** | **Branchement** de toutes les pages déjà prêtes · FR0 : formats français, tableau de bord |
 | **Jeudi 22** | Matin : revue des écrans réels, liste des écarts · test utilisateur · début du support de soutenance | Matin : tests de chaque piste, onboarding (BK3), tableau de bord (BK0) · **16h : gel des fonctionnalités** · 16h-18h : scénario complet et corrections | Matin : derniers branchements · après-midi : corrections Design, responsive, CSRF · **16h : gel** · 16h-18h : scénario complet |
 | **Vendredi 23** | Support de soutenance, schémas, captures d'écran | Corrections des bugs du scénario, README, données de démo finales | Corrections visuelles, vérification sur Chrome / Firefox / Edge |
 | | **Répétition de la démo, puis rendu** | | |
 
 ### Le scénario complet à tester jeudi (et à montrer vendredi)
 
-1. **manager1** se connecte, crée une demande de remplacement pour un poste de son département, la soumet.
-2. **rh** voit la demande « à valider », la valide. **direction** la valide à son tour.
+1. **manager1** se connecte (matricule), crée un besoin « recherche personnel » pour un poste libre de son département, l'envoie aux RH.
+2. **rh** voit le besoin « à traiter » et l'envoie à la Finance. **finance** valide le budget (retour Finance validé).
 3. **rh** ouvre le recrutement : une offre en brouillon apparaît, il la complète et la publie.
-4. Sans être connecté, on va sur `/carrieres`, on postule avec un CV. On postule une deuxième fois avec le même e-mail à une autre offre : c'est bien le **même candidat**.
+4. Sans être connecté, on ouvre l'accueil, on choisit l'offre, on clique « Candidater », on **crée un compte candidat** et on postule avec un CV. Avec le même compte on postule à une autre offre : c'est bien le **même candidat**, ses deux candidatures sont dans son espace.
 5. **rh** présélectionne la candidature, planifie un entretien avec **manager1** comme évaluateur.
 6. **manager1** saisit son évaluation. **rh** retient la candidature.
 7. **rh** crée et envoie la proposition d'embauche, puis enregistre que le candidat **accepte**.
-8. Le dossier salarié apparaît : **matricule**, contrat CDD en brouillon, affectation sur le poste (qui passe à « occupé »), onboarding avec ses 6 tâches.
-9. **rh** signe le contrat et coche les tâches : l'onboarding passe à « terminé ».
-10. Plus tard : **rh** renouvelle le CDD puis passe l'employé en **CDI** : l'onglet Contrats montre les **3 contrats**, rien n'a été écrasé.
+8. Le dossier salarié apparaît : **matricule**, contrat **CE** au statut « créé », poste qui passe à « occupé », une ligne d'historique, onboarding avec ses 6 tâches.
+9. **rh** signe puis valide le contrat et coche les tâches : l'onboarding passe à « terminé ».
+10. Plus tard : **rh** fait un **CDD** à la fin du contrat d'essai, puis un **CDI** : l'onglet Contrats montre les **3 contrats** et l'onglet Historique les 3 lignes, rien n'a été écrasé.
 
 ---
 
@@ -642,7 +687,7 @@ Les actions (boutons) sont des envois de formulaire vers l'URL indiquée, puis r
 
 | Priorité | Signification | Contenu |
 |---|---|---|
-| **P1** | Indispensable : sans ça, pas de démo | Connexion et rôles · bloc 1 : demande + validation RH + Direction + ouverture · bloc 2 : offre publiée, page carrières, candidature avec CV, présélection, entretien, évaluation, retenue · bloc 3 : proposition acceptée → employé + matricule + contrat + affectation + onboarding · bloc 4 : historique des contrats (renouvellement, CDI), checklist d'onboarding · tableau de bord simple · les tests du scénario |
+| **P1** | Indispensable : sans ça, pas de démo | Connexion employé / candidat et rôles · bloc 1 : besoin + passage RH + validation Finance + ouverture · bloc 2 : offre publiée, accueil public, compte candidat, candidature avec CV, espace candidat (statut), présélection, entretien, évaluation, retenue · bloc 3 : proposition acceptée → employé + matricule + contrat + affectation + onboarding · bloc 4 : historique des contrats (renouvellement, CDI), checklist d'onboarding · tableau de bord simple · les tests du scénario |
 | **P2** | Important, à faire si les P1 de sa piste sont finies | Notifications · journal d'audit · fiches poste / département / candidat · comparaison des candidats · récapitulatif d'embauche · changement de poste · documents sur les tâches · « mes tâches d'onboarding » · tableau de bord complet |
 | **P3** | Bonus | Vue Kanban · agenda des entretiens · administration des utilisateurs (on utilise les comptes de démo) · gestion des modèles de tâches · e-mails · tâche planifiée quotidienne · API REST pour le mobile · export CSV · PostgreSQL au lieu de H2 |
 
@@ -674,13 +719,16 @@ Une tâche est terminée seulement si **tout** est vrai :
 | **Employé / salarié** | Une personne embauchée, avec un matricule. |
 | **Candidat** | Une personne qui a postulé au moins une fois. N'est pas un employé. |
 | **Candidature** | Le fait qu'un candidat postule à une offre précise. |
-| **Demande de recrutement** | La demande d'un manager pour créer ou remplacer un poste. |
-| **Validation** | Une décision (RH ou Direction) sur une demande de recrutement. |
-| **Offre d'emploi** | L'annonce publiée, issue d'une demande validée. |
+| **Besoin** | La demande d'un manager : création d'un poste ou recherche de personnel pour un poste existant. |
+| **Validation** | Une décision (RH, Finance) sur un besoin. |
+| **Offre d'emploi** | L'annonce publiée, issue d'un besoin validé. |
+| **Service** | Une subdivision d'un département ; un poste appartient à un département et à un service. |
+| **Compte** | Identifiants de connexion d'un employé (matricule) ou d'un candidat. |
+| **CE** | Contrat d'essai, avant un CDD ou un CDI. |
 | **Proposition d'embauche** | L'offre concrète faite au candidat retenu (salaire, date, type de contrat). |
 | **Matricule** | Identifiant unique et définitif d'un employé. |
 | **Contrat** | Un contrat de travail avec ses dates. Un employé en a plusieurs au fil du temps. |
-| **Affectation** | Le fait qu'un employé occupe un poste pendant une période. |
+| **Historique employé** | Une ligne par changement de poste ou de contrat d'un employé ; on n'en efface jamais. |
 | **Onboarding** | Le processus d'intégration d'un nouvel employé, suivi par une checklist. |
 | **GED** | Gestion électronique des documents : stockage des fichiers (CV, contrats…). |
 | **Workflow** | Suite d'étapes et de statuts avec des règles sur qui peut passer d'une étape à l'autre. |
