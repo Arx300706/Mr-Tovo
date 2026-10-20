@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+	En-tête commun (FR0-06) : logo, nom et rôle de l'utilisateur connecté, déconnexion.
+	Utilisation : <header th:replace="~{fragments/entete :: entete}"></header>
+	Le texte en dur (« Rasoa Fara », « Ressources humaines ») est la donnée d'exemple, remplacée au rendu.
+-->
+<header th:fragment="entete" class="site-header">
+	<div class="entete-gauche">
+		<button type="button" class="bouton-menu" data-bascule-menu aria-label="Ouvrir le menu"
+				th:if="${utilisateur != null}">&#9776;</button>
+		<a class="brand" th:href="@{/}">Mr Tovo</a>
+	</div>
+	<nav class="entete-droite">
+		<th:block th:if="${utilisateur == null}">
+			<a th:href="@{/carrieres}">Offres d'emploi</a>
+			<a th:href="@{/connexion}">Connexion</a>
+		</th:block>
+		<th:block th:if="${utilisateur != null}">
+			<span class="utilisateur">
+				<strong th:text="${utilisateur.nomAffiche}">Rasoa Fara</strong>
+				<small th:text="${utilisateur.role.libelle}">Ressources humaines</small>
+			</span>
+			<form class="deconnexion" method="post" th:action="@{/deconnexion}">
+				<button type="submit">Déconnexion</button>
+			</form>
+		</th:block>
+	</nav>
+</header>
+
+</body>
+</html>
