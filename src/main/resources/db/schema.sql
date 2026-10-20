@@ -10,11 +10,13 @@ USE mr_tovo;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS journal_audit;
 DROP TABLE IF EXISTS historique_employe;
 DROP TABLE IF EXISTS grille_salaire;
 DROP TABLE IF EXISTS contrat;
 DROP TABLE IF EXISTS proposition;
 DROP TABLE IF EXISTS compte;
+DROP TABLE IF EXISTS candidat;
 DROP TABLE IF EXISTS candidature;
 DROP TABLE IF EXISTS offre;
 DROP TABLE IF EXISTS besoin;
@@ -207,12 +209,29 @@ CREATE TABLE candidature (
         FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat)
 ) ENGINE = InnoDB;
 
+CREATE TABLE candidat (
+    id_candidat INT AUTO_INCREMENT PRIMARY KEY,
+    nom         VARCHAR(100) NOT NULL,
+    prenom      VARCHAR(100) NOT NULL,
+    email       VARCHAR(150) NOT NULL UNIQUE,
+    telephone   VARCHAR(30)  NULL
+) ENGINE = InnoDB;
+
+-- Compte de connexion : employé (identifiant = matricule) OU candidat (identifiant = e-mail)
 CREATE TABLE compte (
-    id_compte      INT AUTO_INCREMENT PRIMARY KEY,
-    date_creation  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_candidature INT NULL,
-    CONSTRAINT fk_compte_candidature
-        FOREIGN KEY (id_candidature) REFERENCES candidature (id_candidature)
+    id_compte     INT AUTO_INCREMENT PRIMARY KEY,
+    identifiant   VARCHAR(150) NOT NULL UNIQUE,
+    mot_de_passe  VARCHAR(255) NOT NULL,  -- chiffré (BCrypt)
+    role          VARCHAR(20)  NOT NULL,  -- CANDIDAT, EMPLOYE, MANAGER, RH, FINANCE, ADMIN
+    id_employe    INT NULL,
+    id_candidat   INT NULL,
+    actif         BOOLEAN NOT NULL DEFAULT TRUE,
+    date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_compte_personne CHECK (id_employe IS NULL OR id_candidat IS NULL),
+    CONSTRAINT fk_compte_employe
+        FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+    CONSTRAINT fk_compte_candidat
+        FOREIGN KEY (id_candidat) REFERENCES candidat (id_candidat)
 ) ENGINE = InnoDB;
 
 CREATE TABLE proposition (
@@ -273,6 +292,21 @@ CREATE TABLE grille_salaire (
     CONSTRAINT chk_grille_anciennete CHECK (anciennete_max IS NULL OR anciennete_min <= anciennete_max),
     CONSTRAINT fk_grille_poste
         FOREIGN KEY (id_poste) REFERENCES poste (id_poste)
+) ENGINE = InnoDB;
+
+-- =====================================================================
+--  Journal d'audit (BK0) : une ligne par action, jamais effacée
+-- =====================================================================
+
+CREATE TABLE journal_audit (
+    id_journal_audit INT AUTO_INCREMENT PRIMARY KEY,
+    date_action      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    auteur           VARCHAR(150) NOT NULL,  -- identifiant du compte, ou 'systeme'
+    action           VARCHAR(50)  NOT NULL,
+    objet            VARCHAR(50)  NOT NULL,
+    id_objet         INT          NULL,
+    detail           VARCHAR(500) NULL,
+    INDEX idx_journal_audit_date (date_action)
 ) ENGINE = InnoDB;
 
 -- =====================================================================
