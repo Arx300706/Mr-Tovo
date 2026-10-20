@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+	Menu latéral par rôle (FR0-06), d'après la section 4 du TODO.
+	Utilisation : <aside th:replace="~{fragments/menu :: menu(actif='besoins')}"></aside>
+	Chaque entrée s'affiche si l'utilisateur a l'un des rôles indiqués.
+	S'il n'y a pas d'utilisateur (sécurité ouverte, template ouvert en local), TOUT s'affiche.
+-->
+<aside th:fragment="menu(actif)" class="menu-lateral" id="menu-lateral"
+		th:with="tout=${utilisateur == null}">
+	<ul>
+		<li th:if="${tout or #authorization.expression('hasAnyRole(''EMPLOYE'',''MANAGER'',''RH'',''FINANCE'',''ADMIN'')')}">
+			<a th:href="@{/tableau-de-bord}" th:classappend="${actif == 'tableau-de-bord'} ? 'actif'" href="#">Tableau de bord</a>
+		</li>
+
+		<li th:if="${tout or #authorization.expression('hasRole(''CANDIDAT'')')}">
+			<a th:href="@{/espace-candidat}" th:classappend="${actif == 'espace-candidat'} ? 'actif'" href="#">Mes candidatures</a>
+		</li>
+		<li th:if="${tout or #authorization.expression('hasRole(''CANDIDAT'')')}">
+			<a th:href="@{/carrieres}" th:classappend="${actif == 'carrieres'} ? 'actif'" href="#">Offres d'emploi</a>
+		</li>
+
+		<li class="menu-titre" th:if="${tout or #authorization.expression('hasAnyRole(''MANAGER'',''RH'',''FINANCE'',''ADMIN'')')}">Organisation</li>
+		<li th:if="${tout or #authorization.expression('hasAnyRole(''MANAGER'',''RH'',''FINANCE'')')}">
+			<a th:href="@{/besoins}" th:classappend="${actif == 'besoins'} ? 'actif'" href="#">Besoins en personnel</a>
+		</li>
+		<li th:if="${tout or #authorization.expression('hasAnyRole(''MANAGER'',''RH'',''FINANCE'',''ADMIN'')')}">
+			<a th:href="@{/departements}" th:classappend="${actif == 'departements'} ? 'actif'" href="#">Départements</a>
+		</li>
+		<li th:if="${tout or #authorization.expression('hasAnyRole(''MANAGER'',''RH'',''FINANCE'',''ADMIN'')')}">
+			<a th:href="@{/postes}" th:classappend="${actif == 'postes'} ? 'actif'" href="#">Postes</a>
+		</li>
+
+		<li class="menu-titre" th:if="${tout or #authorization.expression('hasAnyRole(''MANAGER'',''RH'')')}">Recrutement</li>
+		<li th:if="${tout or #authorization.expression('hasRole(''RH'')')}">
+			<a th:href="@{/offres}" th:classappend="${actif == 'offres'} ? 'actif'" href="#">Offres</a>
+		</li>
+		<li th:if="${tout or #authorization.expression('hasAnyRole(''MANAGER'',''RH'')')}">
+			<a th:href="@{/entretiens}" th:classappend="${actif == 'entretiens'} ? 'actif'" href="#">Entretiens</a>
+		</li>
+
+		<li class="menu-titre" th:if="${tout or #authorization.expression('hasAnyRole(''EMPLOYE'',''MANAGER'',''RH'',''FINANCE'')')}">Personnel</li>
+		<li th:if="${tout or #authorization.expression('hasAnyRole(''MANAGER'',''RH'',''FINANCE'')')}">
+			<a th:href="@{/employes}" th:classappend="${actif == 'employes'} ? 'actif'" href="#">Employés</a>
+		</li>
+		<li th:if="${tout or #authorization.expression('hasAnyRole(''EMPLOYE'',''MANAGER'',''RH'',''FINANCE'')')}">
+			<a th:href="@{/mes-taches}" th:classappend="${actif == 'mes-taches'} ? 'actif'" href="#">Mes tâches d'onboarding</a>
+		</li>
+
+		<li class="menu-titre" th:if="${tout or #authorization.expression('hasRole(''ADMIN'')')}">Administration</li>
+		<li th:if="${tout or #authorization.expression('hasRole(''ADMIN'')')}">
+			<a th:href="@{/admin/comptes}" th:classappend="${actif == 'admin-comptes'} ? 'actif'" href="#">Comptes</a>
+		</li>
+		<li th:if="${tout or #authorization.expression('hasRole(''ADMIN'')')}">
+			<a th:href="@{/admin/audit}" th:classappend="${actif == 'admin-audit'} ? 'actif'" href="#">Journal d'audit</a>
+		</li>
+	</ul>
+</aside>
+
+</body>
+</html>
