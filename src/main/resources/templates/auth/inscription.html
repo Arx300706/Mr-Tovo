@@ -9,6 +9,8 @@
 	<h1>Créer un compte candidat</h1>
 
 	<form class="formulaire" method="post" th:action="@{/inscription}" th:object="${formulaire}">
+		<input type="hidden" name="offre" th:if="${offre != null}" th:value="${offre}">
+		<p class="alerte alerte-info" th:if="${offre != null}">Créez votre compte : vous reviendrez ensuite sur le formulaire de candidature.</p>
 		<p class="alerte alerte-erreur" th:if="${#fields.hasErrors('motsDePasseIdentiques')}" th:errors="*{motsDePasseIdentiques}">Erreur</p>
 
 		<label for="nom">Nom</label>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${title})}">
+	<meta charset="UTF-8">
+	<title>Candidatures | Mr Tovo</title>
+	<link rel="stylesheet" href="../../static/css/style.css">
+</head>
+<body>
+<header th:replace="~{fragments/entete :: entete}"></header>
+<link rel="stylesheet" href="../../static/css/recrutement.css" th:href="@{/css/recrutement.css}">
+
+<div class="page-connectee">
+	<aside th:replace="~{fragments/menu :: menu(actif='offres')}"></aside>
+
+	<main class="contenu">
+		<a class="lien-retour" th:href="@{/offres/{id}(id=${offre.idOffre})}" href="../offres/detail.html">&larr; Retour à l'offre</a>
+		<h1>Candidatures — <span th:text="${offre.titre}">Développeur Java / Spring Boot</span></h1>
+
+		<nav class="filtres-statut" aria-label="Filtrer par statut">
+			<a th:href="@{/offres/{id}/candidatures(id=${offre.idOffre})}" th:classappend="${statut == null or statut == ''} ? 'actif'" href="#">Toutes</a>
+			<a th:each="s : ${statuts}" th:href="@{/offres/{id}/candidatures(id=${offre.idOffre},statut=${s.libelle})}"
+			   th:text="${s.libelle}" th:classappend="${s.libelle == statut} ? 'actif'" href="#">reçue</a>
+		</nav>
+
+		<p class="vide" th:if="${candidatures != null and candidatures.isEmpty()}">Aucune candidature pour ce filtre.</p>
+
+		<div class="tableau-defilant" th:unless="${candidatures != null and candidatures.isEmpty()}">
+			<table class="tableau">
+				<thead>
+					<tr>
+						<th>Candidat</th>
+						<th>E-mail</th>
+						<th>Reçue le</th>
+						<th>Statut</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody th:remove="all-but-first">
+					<tr th:each="candidature : ${candidatures}">
+						<td th:text="${candidature.candidat.nomComplet}">Tiana Randriamampionona</td>
+						<td th:text="${candidature.candidat.email}">candidat3@mrtovo.local</td>
+						<td th:text="${#temporals.format(candidature.dateCandidature, 'dd/MM/yyyy')}">13/10/2026</td>
+						<td><span class="badge-statut" th:classappend="'statut-' + ${candidature.statutCandidature.code}" th:text="${candidature.statutCandidature.libelle}">en entretien</span></td>
+						<td><a th:href="@{/candidatures/{id}(id=${candidature.idCandidature})}" href="detail.html">Ouvrir</a></td>
+					</tr>
+					<tr>
+						<td>Hery Rasoanaivo</td><td>candidat2@mrtovo.local</td><td>12/10/2026</td>
+						<td><span class="badge-statut statut-preselectionnee">présélectionnée</span></td><td><a href="detail.html">Ouvrir</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</main>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

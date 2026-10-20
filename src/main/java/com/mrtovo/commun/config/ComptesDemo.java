@@ -3,6 +3,7 @@ package com.mrtovo.commun.config;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import com.mrtovo.recrutement.repository.CandidatRepository;
  * Activé par {@code mrtovo.demo.comptes=true} : à désactiver en production.
  */
 @Component
+@Order(1)
 @ConditionalOnProperty(name = "mrtovo.demo.comptes", havingValue = "true")
 public class ComptesDemo implements ApplicationRunner {
 

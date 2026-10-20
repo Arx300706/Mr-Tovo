@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{public/layout-public :: head(${title})}">
+	<meta charset="UTF-8">
+	<title>Mes candidatures | Mr Tovo</title>
+	<link rel="stylesheet" href="../../static/css/style.css">
+	<link rel="stylesheet" href="../../static/css/recrutement.css">
+</head>
+<body class="page-public">
+<header th:replace="~{public/layout-public :: entete}"></header>
+
+<main class="section-public">
+	<h1>Mes candidatures</h1>
+	<p class="alerte alerte-succes" th:if="${succes}" th:text="${succes}">Votre compte est créé, vous êtes connecté.</p>
+
+	<div class="vide-encart" th:if="${candidatures != null and candidatures.isEmpty()}">
+		<p>Vous n'avez encore envoyé aucune candidature.</p>
+		<a class="bouton-public" th:href="@{/carrieres}" href="../public/offres.html">Découvrir les offres</a>
+	</div>
+
+	<ul class="liste-candidatures" th:unless="${candidatures != null and candidatures.isEmpty()}" th:remove="all-but-first">
+		<li class="carte-candidature" th:each="candidature : ${candidatures}">
+			<div>
+				<h2>
+					<a th:if="${candidature.offre.estVisiblePubliquement(#temporals.createToday())}"
+					   th:href="@{/carrieres/{id}(id=${candidature.offre.idOffre})}" th:text="${candidature.offre.titre}"
+					   href="../public/offre-detail.html">Développeur Java / Spring Boot</a>
+					<span th:unless="${candidature.offre.estVisiblePubliquement(#temporals.createToday())}"
+						  th:text="${candidature.offre.titre}" th:remove="tag"></span>
+				</h2>
+				<p class="offre-infos">
+					Envoyée le <span th:text="${#temporals.format(candidature.dateCandidature, 'dd/MM/yyyy')}">18/10/2026</span>
+					<th:block th:if="${candidature.offre.lieu != null}"> · <span th:text="${candidature.offre.lieu}">Antananarivo</span></th:block>
+				</p>
+			</div>
+			<span class="badge-statut" th:classappend="'statut-' + ${candidature.statutCandidature.code}"
+				  th:text="${candidature.statutCandidature.libelle}">reçue</span>
+		</li>
+		<li class="carte-candidature">
+			<div>
+				<h2><a href="../public/offre-detail.html">Assistant(e) comptable</a></h2>
+				<p class="offre-infos">Envoyée le 16/10/2026 · Antananarivo</p>
+			</div>
+			<span class="badge-statut statut-en-entretien">en entretien</span>
+		</li>
+	</ul>
+</main>
+
+<footer th:replace="~{public/layout-public :: pied}"></footer>
+</body>
+</html>

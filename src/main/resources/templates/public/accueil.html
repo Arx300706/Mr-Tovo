@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{public/layout-public :: head(${title})}">
+	<meta charset="UTF-8">
+	<title>Accueil | Mr Tovo</title>
+	<link rel="stylesheet" href="../../static/css/style.css">
+	<link rel="stylesheet" href="../../static/css/recrutement.css">
+</head>
+<body class="page-public">
+<header th:replace="~{public/layout-public :: entete}"></header>
+
+<main>
+	<section class="banniere">
+		<div class="banniere-contenu">
+			<h1>Construisons ensemble l'avenir de Mr Tovo</h1>
+			<p>Nous recrutons des personnes motivées pour faire grandir nos équipes à Antananarivo et dans les régions.</p>
+			<a class="bouton-public bouton-grand" th:href="@{/carrieres}" href="offres.html">Voir les offres d'emploi</a>
+		</div>
+	</section>
+
+	<section class="section-public" id="a-propos">
+		<h2>À propos de l'entreprise</h2>
+		<div class="grille-valeurs">
+			<div class="valeur">
+				<h3>Qui sommes-nous ?</h3>
+				<p>Mr Tovo est une entreprise malgache de services créée à Antananarivo. Plus de 150 collaborateurs accompagnent nos clients partout à Madagascar.</p>
+			</div>
+			<div class="valeur">
+				<h3>Nos valeurs</h3>
+				<p>Respect, rigueur et esprit d'équipe. Nous croyons que chacun progresse mieux lorsqu'il est écouté et accompagné.</p>
+			</div>
+			<div class="valeur">
+				<h3>Travailler chez nous</h3>
+				<p>Un parcours d'intégration pour chaque nouvel arrivant, des formations régulières et des perspectives d'évolution.</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="section-public">
+		<div class="titre-section">
+			<h2>Nos dernières offres</h2>
+			<a th:href="@{/carrieres}" href="offres.html">Toutes les offres &rarr;</a>
+		</div>
+
+		<p class="vide" th:if="${offres != null and offres.isEmpty()}">Aucune offre n'est ouverte pour le moment. Revenez bientôt !</p>
+
+		<div class="grille-offres" th:remove="all-but-first">
+			<th:block th:each="offre : ${offres}"><article th:replace="~{public/layout-public :: carte-offre(${offre})}"></article></th:block>
+			<article class="carte-offre">
+				<span class="badge-contrat">CDD</span>
+				<h3><a href="offre-detail.html">Assistant(e) comptable</a></h3>
+				<p class="offre-infos">Antananarivo · jusqu'au 09/11/2026</p>
+			</article>
+		</div>
+	</section>
+</main>
+
+<footer th:replace="~{public/layout-public :: pied}"></footer>
+</body>
+</html>

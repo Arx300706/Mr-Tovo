@@ -45,14 +45,14 @@ public class TachesPlanifiees {
 		alerterFinsDeContrat();
 	}
 
-	/** Offre publiée dont la date de fin est passée → statut « fin ». */
+	/** Offre publiée dont la date limite est passée → statut « clôturée ». */
 	@Transactional
 	public int cloturerOffresExpirees() {
 		int nombre = jdbcTemplate.update("""
 			UPDATE offre
-			SET id_statut_offre = (SELECT id_statut_offre FROM statut_offre WHERE libelle = 'fin')
-			WHERE date_fin < CURDATE()
-			  AND id_statut_offre = (SELECT id_statut_offre FROM statut_offre WHERE libelle = 'publie')""");
+			SET id_statut_offre = (SELECT id_statut_offre FROM statut_offre WHERE libelle = 'clôturée')
+			WHERE date_limite < CURDATE()
+			  AND id_statut_offre = (SELECT id_statut_offre FROM statut_offre WHERE libelle = 'publiée')""");
 		tracer("CLOTURER_EXPIREES", "Offre", nombre);
 		return nombre;
 	}

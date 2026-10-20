@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 
 /**
  * Candidat (section 2.4) : distinct de l'employé, il peut avoir plusieurs candidatures.
- * Version minimale créée par BK0-04 pour l'inscription ; BK2 la complète (CV…).
+ * Relié à son compte de connexion par {@code Compte.idCandidat} (un compte = un candidat).
  */
 @Entity
 @Table(name = "candidat")
@@ -66,6 +66,10 @@ public class Candidat {
 
 	public void setTelephone(String telephone) {
 		this.telephone = telephone;
+	}
+
+	public String getNomComplet() {
+		return prenom + " " + nom;
 	}
 
 }

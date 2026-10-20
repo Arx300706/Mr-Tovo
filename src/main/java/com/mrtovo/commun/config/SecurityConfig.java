@@ -9,6 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 import com.mrtovo.commun.entity.Role;
 import com.mrtovo.commun.securite.UtilisateurConnecte;
@@ -36,7 +39,8 @@ public class SecurityConfig {
 		http
 			.userDetailsService(compteDetailsService)
 			.authorizeHttpRequests(auth -> auth
-				// Public
+				// Public (sauf le dépôt de candidature, réservé aux candidats)
+				.requestMatchers("/carrieres/*/candidater", "/carrieres/*/postuler").hasRole(CANDIDAT)
 				.requestMatchers("/", "/connexion", "/inscription", "/carrieres", "/carrieres/**").permitAll()
 				.requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/error", "/erreurs/**").permitAll()
 				// Commun
@@ -80,9 +84,19 @@ public class SecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 
-	/** Candidat → son espace, employés → tableau de bord. */
+	/**
+	 * Retour sur la page demandée avant la connexion (ex. « Candidater » sur une offre),
+	 * sinon candidat → son espace, employés → tableau de bord.
+	 */
 	private AuthenticationSuccessHandler redirectionSelonRole() {
+		RequestCache requestCache = new HttpSessionRequestCache();
 		return (request, response, authentication) -> {
+			SavedRequest pageDemandee = requestCache.getRequest(request, response);
+			if (pageDemandee != null) {
+				requestCache.removeRequest(request, response);
+				response.sendRedirect(pageDemandee.getRedirectUrl());
+				return;
+			}
 			boolean candidat = authentication.getPrincipal() instanceof UtilisateurConnecte u && u.estCandidat();
 			response.sendRedirect(request.getContextPath() + (candidat ? "/espace-candidat" : "/tableau-de-bord"));
 		};

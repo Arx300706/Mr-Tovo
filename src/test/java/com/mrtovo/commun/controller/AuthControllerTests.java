@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -108,13 +109,23 @@ class AuthControllerTests {
 	}
 
 	@Test
-	void inscriptionValideCreeLeCompte() throws Exception {
+	void inscriptionValideCreeLeCompteEtConnecte() throws Exception {
+		Compte compte = new Compte();
+		compte.setIdentifiant("soa@x.mg");
+		when(inscriptionService.inscrireCandidat(any(InscriptionFormulaire.class))).thenReturn(compte);
+		when(compteDetailsService.loadUserByUsername("soa@x.mg")).thenReturn(utilisateur("soa@x.mg", Role.CANDIDAT));
+
 		mockMvc.perform(post("/inscription").with(csrf())
 				.param("nom", "Rabe").param("prenom", "Soa").param("email", "soa@x.mg")
 				.param("motDePasse", "motdepasse1").param("confirmationMotDePasse", "motdepasse1"))
-			.andExpect(redirectedUrl("/connexion?espace=candidat"));
+			.andExpect(redirectedUrl("/espace-candidat"))
+			.andExpect(authenticated().withUsername("soa@x.mg").withRoles("CANDIDAT"));
 
-		verify(inscriptionService).inscrireCandidat(any(InscriptionFormulaire.class));
+		// Depuis le bouton « Créer un compte » d'une offre : retour sur le formulaire de candidature
+		mockMvc.perform(post("/inscription").with(csrf()).param("offre", "7")
+				.param("nom", "Rabe").param("prenom", "Soa").param("email", "soa@x.mg")
+				.param("motDePasse", "motdepasse1").param("confirmationMotDePasse", "motdepasse1"))
+			.andExpect(redirectedUrl("/carrieres/7/candidater"));
 	}
 
 	@Test

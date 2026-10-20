@@ -15,6 +15,8 @@ DROP TABLE IF EXISTS historique_employe;
 DROP TABLE IF EXISTS grille_salaire;
 DROP TABLE IF EXISTS contrat;
 DROP TABLE IF EXISTS proposition;
+DROP TABLE IF EXISTS evaluation_candidat;
+DROP TABLE IF EXISTS entretien;
 DROP TABLE IF EXISTS compte;
 DROP TABLE IF EXISTS candidat;
 DROP TABLE IF EXISTS candidature;
@@ -161,60 +163,64 @@ CREATE TABLE besoin (
         FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat)
 ) ENGINE = InnoDB;
 
+-- Offre d'emploi (BK2) : vient d'un besoin validé ; visible au public si « publiée » et non expirée
 CREATE TABLE offre (
     id_offre          INT AUTO_INCREMENT PRIMARY KEY,
-    id_besoin         INT NOT NULL,
-    intitule          VARCHAR(150) NOT NULL,
-    id_departement    INT NOT NULL,
-    id_service        INT NULL,
+    id_besoin         INT NULL,
+    id_poste          INT NULL,
+    id_departement    INT NULL,
+    titre             VARCHAR(150) NOT NULL,
     description       TEXT NULL,
-    date_creation     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    date_fin          DATE NULL,
-    date_modification DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    profil            TEXT NULL,
+    id_type_contrat   INT NULL,
+    lieu              VARCHAR(150) NULL,
+    date_publication  DATE NULL,
+    date_limite       DATE NULL,            -- NULL = pas de date limite
     id_statut_offre   INT NOT NULL,
+    date_creation     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_modification DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_offre_besoin
         FOREIGN KEY (id_besoin) REFERENCES besoin (id_besoin),
+    CONSTRAINT fk_offre_poste
+        FOREIGN KEY (id_poste) REFERENCES poste (id_poste),
     CONSTRAINT fk_offre_departement
         FOREIGN KEY (id_departement) REFERENCES departement (id_departement),
-    CONSTRAINT fk_offre_service
-        FOREIGN KEY (id_service) REFERENCES service (id_service),
-    CONSTRAINT fk_offre_statut_offre
+    CONSTRAINT fk_offre_type_contrat
+        FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat),
+    CONSTRAINT fk_offre_statut
         FOREIGN KEY (id_statut_offre) REFERENCES statut_offre (id_statut_offre)
 ) ENGINE = InnoDB;
 
-CREATE TABLE candidature (
-    id_candidature        INT AUTO_INCREMENT PRIMARY KEY,
-    id_compte             INT NULL,    -- FK vers compte (ajoutée plus bas)
-    date_candidature      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_departement        INT NOT NULL,
-    id_employe            INT NULL,    -- renseigné si candidat interne / ancien employé
-    id_offre              INT NOT NULL,
-    id_statut_candidature INT NOT NULL,
-    id_type_candidature   INT NOT NULL,
-    id_type_contrat       INT NOT NULL,
-    date_test_technique   DATETIME NULL,
-    date_entretien        DATETIME NULL,
-    date_modification     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_candidature_departement
-        FOREIGN KEY (id_departement) REFERENCES departement (id_departement),
-    CONSTRAINT fk_candidature_employe
-        FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
-    CONSTRAINT fk_candidature_offre
-        FOREIGN KEY (id_offre) REFERENCES offre (id_offre),
-    CONSTRAINT fk_candidature_statut
-        FOREIGN KEY (id_statut_candidature) REFERENCES statut_candidature (id_statut_candidature),
-    CONSTRAINT fk_candidature_type
-        FOREIGN KEY (id_type_candidature) REFERENCES type_candidature (id_type_candidature),
-    CONSTRAINT fk_candidature_type_contrat
-        FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat)
-) ENGINE = InnoDB;
-
+-- CANDIDAT ≠ EMPLOYÉ : une personne peut avoir plusieurs candidatures avant d'être embauchée
 CREATE TABLE candidat (
     id_candidat INT AUTO_INCREMENT PRIMARY KEY,
     nom         VARCHAR(100) NOT NULL,
     prenom      VARCHAR(100) NOT NULL,
     email       VARCHAR(150) NOT NULL UNIQUE,
     telephone   VARCHAR(30)  NULL
+) ENGINE = InnoDB;
+
+-- Une seule candidature par candidat et par offre
+CREATE TABLE candidature (
+    id_candidature        INT AUTO_INCREMENT PRIMARY KEY,
+    id_candidat           INT NOT NULL,
+    id_offre              INT NOT NULL,
+    date_candidature      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lettre                TEXT NULL,
+    id_document_cv        INT NULL,     -- document de la GED (BK0-05), vide tant qu'elle n'est pas prête
+    id_statut_candidature INT NOT NULL,
+    id_type_candidature   INT NULL,
+    motif_rejet           VARCHAR(500) NULL,
+    date_modification     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_candidature_candidat_offre UNIQUE (id_candidat, id_offre),
+    CONSTRAINT fk_candidature_candidat
+        FOREIGN KEY (id_candidat) REFERENCES candidat (id_candidat),
+    CONSTRAINT fk_candidature_offre
+        FOREIGN KEY (id_offre) REFERENCES offre (id_offre),
+    CONSTRAINT fk_candidature_statut
+        FOREIGN KEY (id_statut_candidature) REFERENCES statut_candidature (id_statut_candidature),
+    CONSTRAINT fk_candidature_type
+        FOREIGN KEY (id_type_candidature) REFERENCES type_candidature (id_type_candidature)
 ) ENGINE = InnoDB;
 
 -- Compte de connexion : employé (identifiant = matricule) OU candidat (identifiant = e-mail)
@@ -232,6 +238,37 @@ CREATE TABLE compte (
         FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
     CONSTRAINT fk_compte_candidat
         FOREIGN KEY (id_candidat) REFERENCES candidat (id_candidat)
+) ENGINE = InnoDB;
+
+CREATE TABLE entretien (
+    id_entretien   INT AUTO_INCREMENT PRIMARY KEY,
+    id_candidature INT NOT NULL,
+    type           VARCHAR(20)  NOT NULL,                   -- TELEPHONIQUE, PHYSIQUE, VISIO
+    date_entretien DATETIME     NOT NULL,
+    lieu           VARCHAR(200) NULL,                       -- salle ou lien visio
+    id_evaluateur  INT NULL,                                -- compte de l'évaluateur
+    statut         VARCHAR(20)  NOT NULL DEFAULT 'PLANIFIE', -- PLANIFIE, REALISE, ANNULE
+    CONSTRAINT fk_entretien_candidature
+        FOREIGN KEY (id_candidature) REFERENCES candidature (id_candidature),
+    CONSTRAINT fk_entretien_evaluateur
+        FOREIGN KEY (id_evaluateur) REFERENCES compte (id_compte)
+) ENGINE = InnoDB;
+
+-- Une évaluation par évaluateur et par entretien
+CREATE TABLE evaluation_candidat (
+    id_evaluation   INT AUTO_INCREMENT PRIMARY KEY,
+    id_entretien    INT NOT NULL,
+    note            INT NOT NULL,                           -- sur 20
+    avis            VARCHAR(20) NOT NULL,                   -- FAVORABLE, RESERVE, DEFAVORABLE
+    commentaire     TEXT NULL,
+    id_evaluateur   INT NOT NULL,
+    date_evaluation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_evaluation_note CHECK (note BETWEEN 0 AND 20),
+    CONSTRAINT uq_evaluation_entretien_evaluateur UNIQUE (id_entretien, id_evaluateur),
+    CONSTRAINT fk_evaluation_entretien
+        FOREIGN KEY (id_entretien) REFERENCES entretien (id_entretien),
+    CONSTRAINT fk_evaluation_evaluateur
+        FOREIGN KEY (id_evaluateur) REFERENCES compte (id_compte)
 ) ENGINE = InnoDB;
 
 CREATE TABLE proposition (
@@ -321,10 +358,6 @@ ALTER TABLE employe
     ADD CONSTRAINT fk_employe_contrat
         FOREIGN KEY (id_contrat) REFERENCES contrat (id_contrat);
 
-ALTER TABLE candidature
-    ADD CONSTRAINT fk_candidature_compte
-        FOREIGN KEY (id_compte) REFERENCES compte (id_compte);
-
 -- =====================================================================
 --  Données de référence
 -- =====================================================================
@@ -342,10 +375,10 @@ INSERT INTO type_besoin (libelle) VALUES
     ('creation poste'), ('recherche personnel'), ('recherche stagiaire');
 
 INSERT INTO statut_offre (libelle) VALUES
-    ('enregistre'), ('cree'), ('publie'), ('fin');
+    ('brouillon'), ('publiée'), ('clôturée'), ('pourvue'), ('annulée');
 
 INSERT INTO statut_candidature (libelle) VALUES
-    ('cree'), ('selectionne'), ('teste techniquement'), ('entretien ok'), ('rejete');
+    ('reçue'), ('présélectionnée'), ('en entretien'), ('retenue'), ('rejetée'), ('retirée'), ('embauchée');
 
 INSERT INTO type_candidature (libelle) VALUES
     ('employe'), ('externe'), ('ancienne relation');
