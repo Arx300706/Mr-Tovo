@@ -2,8 +2,11 @@ package com.mrtovo.commun.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,7 +36,26 @@ public class SecurityConfig {
 	private static final String FINANCE = Role.FINANCE.name();
 	private static final String ADMIN = Role.ADMIN.name();
 
+	/**
+	 * API REST CRUD reprise d'Exemple ({@code /api/**}) : RH et admin, en HTTP Basic, sans session ni CSRF.
+	 * Chaîne séparée pour ne pas changer le comportement des pages (redirection vers /connexion).
+	 */
 	@Bean
+	@Order(1)
+	public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CompteDetailsService compteDetailsService)
+			throws Exception {
+		http
+			.securityMatcher("/api/**")
+			.userDetailsService(compteDetailsService)
+			.authorizeHttpRequests(auth -> auth.anyRequest().hasAnyRole(RH, ADMIN))
+			.httpBasic(Customizer.withDefaults())
+			.csrf(csrf -> csrf.disable())
+			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+		return http.build();
+	}
+
+	@Bean
+	@Order(2)
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, CompteDetailsService compteDetailsService)
 			throws Exception {
 		http
