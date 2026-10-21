@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.mrtovo.commun.entity.Compte;
+import com.mrtovo.commun.entity.Employe;
 import com.mrtovo.commun.entity.Role;
 
 /**
@@ -34,6 +35,17 @@ public class UtilisateurConnecte implements UserDetails {
 		this.idCandidat = compte.getIdCandidat();
 		this.nomAffiche = nomAffiche;
 		this.actif = compte.isActif();
+	}
+
+	public UtilisateurConnecte(Employe employe) {
+		this.idCompte = null;
+		this.identifiant = employe.getMatricule();
+		this.motDePasse = employe.getMotDePasse();
+		this.role = Role.EMPLOYE;
+		this.idEmploye = employe.getIdEmploye();
+		this.idCandidat = null;
+		this.nomAffiche = employe.getPrenom() + " " + employe.getNom();
+		this.actif = true;
 	}
 
 	public Integer getIdCompte() {

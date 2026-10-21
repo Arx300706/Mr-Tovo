@@ -8,7 +8,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.mrtovo.commun.entity.Compte;
+import com.mrtovo.commun.entity.Employe;
 import com.mrtovo.commun.repository.CompteRepository;
+import com.mrtovo.commun.repository.EmployeRepository;
 import com.mrtovo.commun.securite.UtilisateurConnecte;
 import com.mrtovo.recrutement.repository.CandidatRepository;
 
@@ -25,22 +27,33 @@ public class CompteDetailsService implements UserDetailsService {
 	public static final String ESPACE_CANDIDAT = "candidat";
 
 	private final CompteRepository compteRepository;
+	private final EmployeRepository employeRepository;
 	private final CandidatRepository candidatRepository;
 
-	public CompteDetailsService(CompteRepository compteRepository, CandidatRepository candidatRepository) {
+	public CompteDetailsService(CompteRepository compteRepository, EmployeRepository employeRepository,
+			CandidatRepository candidatRepository) {
 		this.compteRepository = compteRepository;
+		this.employeRepository = employeRepository;
 		this.candidatRepository = candidatRepository;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public UtilisateurConnecte loadUserByUsername(String identifiant) {
-		Compte compte = compteRepository.findByIdentifiantIgnoreCase(identifiant.trim())
-			.orElseThrow(() -> new UsernameNotFoundException("Compte introuvable"));
-
 		String espace = espaceDemande();
-		if (ESPACE_CANDIDAT.equals(espace) && !compte.getRole().estCandidat()
-				|| ESPACE_EMPLOYE.equals(espace) && compte.getRole().estCandidat()) {
+		String identifiantNettoye = identifiant.trim();
+		if (ESPACE_EMPLOYE.equals(espace)) {
+			Employe employe = employeRepository.findByMatriculeIgnoreCase(identifiantNettoye)
+				.orElseThrow(() -> new UsernameNotFoundException("Employé introuvable"));
+			return new UtilisateurConnecte(employe);
+		}
+		if (!ESPACE_CANDIDAT.equals(espace)) {
+			throw new UsernameNotFoundException("Espace de connexion invalide");
+		}
+
+		Compte compte = compteRepository.findByIdentifiantIgnoreCase(identifiantNettoye)
+			.orElseThrow(() -> new UsernameNotFoundException("Compte introuvable"));
+		if (!compte.getRole().estCandidat()) {
 			throw new UsernameNotFoundException("Compte introuvable pour cet espace");
 		}
 

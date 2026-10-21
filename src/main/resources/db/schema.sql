@@ -118,6 +118,7 @@ CREATE TABLE employe (
     nom        VARCHAR(100) NOT NULL,
     prenom     VARCHAR(100) NOT NULL,
     matricule  VARCHAR(30)  NOT NULL UNIQUE,
+    mot_de_passe VARCHAR(255) NOT NULL,
     id_poste   INT NULL,               -- poste actuel
     id_contrat INT NULL,               -- contrat actuel (FK ajoutée plus bas)
     CONSTRAINT fk_employe_poste
