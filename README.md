@@ -241,6 +241,25 @@ public String envoyer(@Valid @ModelAttribute ContactForm contactForm, BindingRes
 
 4. Ouvrir http://localhost:8080/a-propos.
 
+### API REST CRUD (`/api/**`)
+
+Reprise du projet Exemple : chaque entité des blocs besoin, embauche et GED a une API
+`GET /api/{ressource}`, `GET /api/{ressource}/{id}`, `POST`, `PUT /api/{ressource}/{id}`, `DELETE /api/{ressource}/{id}`
+(classe commune `commun/controller/ApiCrudController`). Réservée aux rôles **RH** et **ADMIN**, en HTTP Basic, sans CSRF.
+
+Ressources : `departements`, `services`, `postes`, `types-besoin`, `statuts-besoin`, `besoins`, `validations`,
+`employes`, `contrats`, `statuts-contrat`, `types-contrat`, `propositions`, `statuts-proposition`,
+`historiques-employe`, `onboardings`, `onboarding-taches`, `documents`.
+
+```bash
+curl -u rh:demo1234 http://localhost:8080/api/departements
+curl -u rh:demo1234 -H 'Content-Type: application/json' -X POST \
+     -d '{"libelle":"Développeur","departement":{"idDepartement":1}}' http://localhost:8080/api/postes
+```
+
+Les relations vers un employé ou un contrat sont paresseuses : on les envoie en objet (`"manager":{"idEmploye":1}`)
+et on les relit sous forme de numéro (`"idManager":1`), ce qui évite les boucles employé ↔ contrat ↔ département.
+
 ---
 
 ## 7. Problèmes fréquents

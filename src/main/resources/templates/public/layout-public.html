@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+	Gabarit PUBLIC (FR1-01) : logo, liens publics, sans menu interne.
+	Utilisé par public/*.html et espace-candidat/*.html :
+	  <head th:replace="~{public/layout-public :: head(${title})}"></head>
+	  <header th:replace="~{public/layout-public :: entete}"></header>
+	  <footer th:replace="~{public/layout-public :: pied}"></footer>
+-->
+<head th:fragment="head(title)">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title th:text="${title} + ' | Mr Tovo'">Offres d'emploi | Mr Tovo</title>
+	<link rel="stylesheet" href="../../static/css/style.css" th:href="@{/css/style.css}">
+	<link rel="stylesheet" href="../../static/css/recrutement.css" th:href="@{/css/recrutement.css}">
+</head>
+<body>
+
+<header th:fragment="entete" class="entete-public">
+	<a class="logo" th:href="@{/}" href="accueil.html">Mr <span>Tovo</span></a>
+	<input type="checkbox" id="bascule-nav-public" class="bascule-nav" aria-label="Ouvrir le menu">
+	<label for="bascule-nav-public" class="bouton-nav" aria-hidden="true">&#9776;</label>
+	<nav class="nav-public">
+		<a th:href="@{/carrieres}" href="offres.html">Offres d'emploi</a>
+		<th:block th:if="${utilisateur == null}">
+			<a th:href="@{/connexion(espace='candidat')}" href="#">Se connecter</a>
+			<a class="bouton-public" th:href="@{/inscription}" href="#">Créer un compte</a>
+		</th:block>
+		<th:block th:if="${utilisateur != null}">
+			<a th:if="${utilisateur.estCandidat()}" th:href="@{/espace-candidat}" href="../espace-candidat/candidatures.html">Mes candidatures</a>
+			<a th:unless="${utilisateur.estCandidat()}" th:href="@{/tableau-de-bord}" href="#">Mon espace</a>
+			<span class="nav-utilisateur" th:text="${utilisateur.nomAffiche}">Hery Rasoanaivo</span>
+			<form class="deconnexion" method="post" th:action="@{/deconnexion}">
+				<button type="submit">Déconnexion</button>
+			</form>
+		</th:block>
+	</nav>
+</header>
+
+<!-- Carte d'une offre (accueil et liste des offres) -->
+	<article class="carte-offre" th:fragment="carte-offre(offre)">
+		<span class="badge-contrat" th:if="${offre.typeContrat != null}" th:text="${offre.typeContrat.libelle}">CDI</span>
+		<h3><a th:href="@{/carrieres/{id}(id=${offre.idOffre})}" th:text="${offre.titre}" href="offre-detail.html">Développeur Java / Spring Boot</a></h3>
+		<p class="offre-infos">
+			<span th:text="${offre.lieu}">Antananarivo</span>
+			<th:block th:if="${offre.dateLimite != null}"> · jusqu'au <span th:text="${#temporals.format(offre.dateLimite, 'dd/MM/yyyy')}">19/11/2026</span></th:block>
+		</p>
+		<p class="offre-resume" th:if="${offre.description != null}"
+		   th:text="${#strings.abbreviate(offre.description, 140)}">Au sein de l'équipe informatique, vous développez et maintenez nos applications internes de gestion…</p>
+		<a class="lien-offre" th:href="@{/carrieres/{id}(id=${offre.idOffre})}" href="offre-detail.html">Voir l'offre &rarr;</a>
+	</article>
+
+<footer th:fragment="pied" class="pied-public">
+	<div class="pied-contenu">
+		<p><strong>Mr Tovo</strong> — Antananarivo, Madagascar</p>
+		<p>
+			<a th:href="@{/carrieres}" href="offres.html">Offres d'emploi</a> ·
+			<a th:href="@{/connexion(espace='employe')}" href="#">Espace employé</a>
+		</p>
+		<p class="pied-copyright">&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Mr Tovo</p>
+	</div>
+	<script src="../../static/js/app.js" th:src="@{/js/app.js}"></script>
+	<script src="../../static/js/recrutement.js" th:src="@{/js/recrutement.js}"></script>
+</footer>
+
+</body>
+</html>

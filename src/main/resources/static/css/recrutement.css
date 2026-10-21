@@ -1,0 +1,190 @@
+/* =====================================================================
+   Recrutement (FR1) : pages publiques, espace candidat, offres et candidatures RH
+   ===================================================================== */
+
+:root {
+	--rec-primaire: #0b6e4f;
+	--rec-primaire-fonce: #08543c;
+	--rec-clair: #e7f4ef;
+	--rec-texte: #1f2933;
+	--rec-gris: #616e7c;
+	--rec-bord: #e4e7eb;
+}
+
+/* ----- Gabarit public ----- */
+.page-public { background: #fff; }
+
+.entete-public {
+	display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+	padding: .9rem clamp(1rem, 4vw, 3rem); border-bottom: 1px solid var(--rec-bord); background: #fff;
+	position: sticky; top: 0; z-index: 10;
+}
+.entete-public .logo { font-size: 1.4rem; font-weight: 800; color: var(--rec-texte); text-decoration: none; }
+.entete-public .logo span { color: var(--rec-primaire); }
+.nav-public { display: flex; align-items: center; gap: 1.25rem; }
+.nav-public a { color: var(--rec-texte); text-decoration: none; font-weight: 500; }
+.nav-public a:hover { color: var(--rec-primaire); }
+.nav-public .nav-utilisateur { color: var(--rec-gris); font-size: .9rem; }
+.nav-public .deconnexion button {
+	background: none; border: 1px solid var(--rec-bord); padding: .35rem .8rem; cursor: pointer; border-radius: 6px; font: inherit;
+}
+.bascule-nav, .bouton-nav { display: none; }
+
+.bouton-public {
+	display: inline-block; padding: .6rem 1.2rem; border-radius: 8px; border: 2px solid var(--rec-primaire);
+	background: var(--rec-primaire); color: #fff !important; text-decoration: none; font-weight: 600; cursor: pointer;
+	font: inherit; font-weight: 600; text-align: center;
+}
+.bouton-public:hover { background: var(--rec-primaire-fonce); border-color: var(--rec-primaire-fonce); }
+.bouton-contour { background: #fff; color: var(--rec-primaire) !important; }
+.bouton-contour:hover { background: var(--rec-clair); }
+.bouton-grand { padding: .85rem 1.6rem; font-size: 1.05rem; }
+.bouton-plein { display: block; width: 100%; margin-top: .75rem; }
+
+.section-public { max-width: 1100px; width: 100%; margin: 0 auto; padding: 2.5rem clamp(1rem, 4vw, 2rem); flex: 1; }
+.section-public h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin-top: 0; }
+.titre-section { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.titre-section a { color: var(--rec-primaire); font-weight: 600; text-decoration: none; }
+
+.banniere { background: linear-gradient(135deg, var(--rec-primaire), #13866a); color: #fff; }
+.banniere-contenu { max-width: 1100px; margin: 0 auto; padding: clamp(3rem, 8vw, 5.5rem) clamp(1rem, 4vw, 2rem); }
+.banniere h1 { font-size: clamp(1.8rem, 5vw, 2.8rem); margin: 0 0 1rem; max-width: 18ch; }
+.banniere p { font-size: 1.1rem; max-width: 50ch; margin-bottom: 1.75rem; opacity: .95; }
+.banniere .bouton-public { background: #fff; color: var(--rec-primaire) !important; border-color: #fff; }
+
+.grille-valeurs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+.valeur { background: var(--rec-clair); padding: 1.25rem 1.5rem; border-radius: 12px; }
+.valeur h3 { margin-top: 0; color: var(--rec-primaire-fonce); }
+
+.pied-public { background: #1f2933; color: #cbd2d9; margin-top: auto; }
+.pied-contenu { max-width: 1100px; margin: 0 auto; padding: 1.75rem clamp(1rem, 4vw, 2rem); font-size: .9rem; }
+.pied-contenu a { color: #fff; }
+.pied-copyright { color: #9aa5b1; }
+
+/* ----- Offres publiques ----- */
+.filtres-offres { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-bottom: 1rem; }
+.filtres-offres input, .filtres-offres select {
+	padding: .65rem .8rem; border: 1px solid #cbd2d9; border-radius: 8px; font: inherit; background: #fff;
+}
+.filtres-offres input { flex: 1 1 260px; }
+.lien-effacer { color: var(--rec-gris); }
+.resultats { color: var(--rec-gris); margin: .5rem 0 1rem; }
+
+.grille-offres { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+.carte-offre {
+	border: 1px solid var(--rec-bord); border-radius: 12px; padding: 1.25rem 1.4rem; background: #fff;
+	display: flex; flex-direction: column; gap: .4rem; transition: box-shadow .15s, border-color .15s;
+}
+.carte-offre:hover { border-color: var(--rec-primaire); box-shadow: 0 6px 20px rgba(11, 110, 79, .1); }
+.carte-offre h3 { margin: .2rem 0 0; font-size: 1.15rem; }
+.carte-offre h3 a { color: var(--rec-texte); text-decoration: none; }
+.offre-infos { color: var(--rec-gris); font-size: .9rem; margin: 0; }
+.offre-resume { margin: .3rem 0; color: #3e4c59; }
+.lien-offre { margin-top: auto; color: var(--rec-primaire); font-weight: 600; text-decoration: none; }
+.badge-contrat {
+	align-self: flex-start; background: var(--rec-clair); color: var(--rec-primaire-fonce);
+	font-size: .75rem; font-weight: 700; padding: .2rem .6rem; border-radius: 999px; letter-spacing: .03em;
+}
+
+.lien-retour { display: inline-block; margin-bottom: 1rem; color: var(--rec-gris); text-decoration: none; }
+.lien-retour:hover { color: var(--rec-primaire); }
+
+.detail-offre { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 2rem; align-items: start; }
+.contenu-offre h1 { margin: .5rem 0 1rem; }
+.faits-offre { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; color: var(--rec-gris); }
+.texte-long { white-space: pre-line; line-height: 1.6; }
+.encart-candidature {
+	position: sticky; top: 5rem; border: 1px solid var(--rec-bord); border-radius: 12px; padding: 1.5rem; background: #fafbfc;
+}
+.encart-candidature h2 { margin-top: 0; }
+.formulaire-candidature { max-width: none; }
+.formulaire-candidature input[type="file"] { padding: .5rem; background: #fff; border: 1px dashed #9aa5b1; border-radius: 8px; }
+.formulaire-candidature textarea { padding: .6rem; border: 1px solid #cbd2d9; border-radius: 8px; font: inherit; resize: vertical; }
+.formulaire-candidature small, .formulaire small { color: var(--rec-gris); font-weight: normal; }
+.alerte-info { background: #e8f1fb; color: #1d4e89; }
+
+.confirmation { text-align: center; max-width: 640px; }
+.icone-succes {
+	width: 72px; height: 72px; line-height: 72px; margin: 1rem auto; border-radius: 50%;
+	background: var(--rec-clair); color: var(--rec-primaire); font-size: 2.2rem; font-weight: 700;
+}
+.actions-confirmation { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+
+/* ----- Espace candidat ----- */
+.liste-candidatures { list-style: none; padding: 0; display: flex; flex-direction: column; gap: .75rem; }
+.carte-candidature {
+	display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+	border: 1px solid var(--rec-bord); border-radius: 12px; padding: 1rem 1.25rem;
+}
+.carte-candidature h2 { font-size: 1.1rem; margin: 0 0 .25rem; }
+.carte-candidature h2 a { color: var(--rec-texte); }
+.vide-encart { text-align: center; padding: 2.5rem 1rem; border: 1px dashed #cbd2d9; border-radius: 12px; }
+
+/* ----- Badges de statut (offre, candidature, évaluation) ----- */
+.badge-statut {
+	display: inline-block; padding: .2rem .65rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
+	background: #e4e7eb; color: #3e4c59; white-space: nowrap;
+}
+.statut-brouillon { background: #f0f2f5; color: #52606d; }
+.statut-publiee, .statut-recue { background: #e3f2fd; color: #0d47a1; }
+.statut-preselectionnee, .statut-en-entretien { background: #fff4e5; color: #8a4b00; }
+.statut-retenue, .statut-embauchee, .statut-pourvue, .avis-favorable { background: #e3f9e5; color: #1b5e20; }
+.statut-cloturee, .statut-retiree { background: #e4e7eb; color: #3e4c59; }
+.statut-annulee, .statut-rejetee, .avis-defavorable { background: #fde8e8; color: #c62828; }
+.avis-reserve { background: #fff4e5; color: #8a4b00; }
+
+/* ----- Pages RH ----- */
+.titre-page { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.titre-page h1 { margin: 0 0 .4rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.actions .bouton, .actions button { margin-top: 0; }
+.filtres-statut { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+.filtres-statut a {
+	padding: .3rem .8rem; border: 1px solid #cbd2d9; border-radius: 999px; text-decoration: none; color: var(--rec-texte); font-size: .875rem;
+}
+.filtres-statut a.actif { background: #1f2933; border-color: #1f2933; color: #fff; }
+.tableau .nombre { text-align: right; }
+.grille-detail { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.5rem; }
+.infos { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1rem; margin: 0 0 1rem; }
+.infos dt { color: var(--rec-gris); }
+.infos dd { margin: 0; }
+.lien-secondaire { display: inline-block; margin-top: .75rem; color: var(--rec-primaire); }
+.formulaire-large { max-width: 820px; }
+.formulaire-large textarea, .formulaire-large input, .formulaire-large select { font: inherit; }
+.formulaire-large textarea { padding: .5rem; border: 1px solid #cbd2d9; resize: vertical; }
+.ligne-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+.ligne-champs .champ { display: flex; flex-direction: column; gap: .25rem; }
+.note-moyenne { display: flex; justify-content: space-between; align-items: center; background: var(--rec-clair); padding: .75rem 1rem; }
+.note-moyenne strong { font-size: 1.3rem; color: var(--rec-primaire-fonce); }
+.liste-evaluations { list-style: none; padding: 0; margin: 0; }
+.liste-evaluations li { border-bottom: 1px solid var(--rec-bord); padding: .75rem 0; }
+.liste-evaluations p { margin: .35rem 0 0; }
+
+.visuellement-cache {
+	position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ----- Téléphone ----- */
+@media (max-width: 860px) {
+	.detail-offre, .grille-detail { grid-template-columns: 1fr; }
+	.encart-candidature { position: static; }
+}
+
+@media (max-width: 640px) {
+	.bouton-nav { display: block; font-size: 1.6rem; cursor: pointer; padding: 0 .25rem; }
+	.nav-public {
+		display: none; width: 100%; flex-direction: column; align-items: stretch; gap: 0; margin-top: .75rem;
+		border-top: 1px solid var(--rec-bord);
+	}
+	.nav-public > a, .nav-public .nav-utilisateur { padding: .8rem 0; border-bottom: 1px solid var(--rec-bord); }
+	.nav-public .deconnexion { margin: .75rem 0 0; }
+	.nav-public .deconnexion button { width: 100%; padding: .6rem; }
+	.nav-public .bouton-public { margin-top: .75rem; }
+	.bascule-nav:checked ~ .nav-public { display: flex; }
+
+	.grille-offres { grid-template-columns: 1fr; }
+	.filtres-offres { flex-direction: column; align-items: stretch; }
+	.filtres-offres input { flex-basis: auto; }
+	.carte-candidature { flex-direction: column; align-items: flex-start; }
+	.titre-page .actions { width: 100%; }
+}

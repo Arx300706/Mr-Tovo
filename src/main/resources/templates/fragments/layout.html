@@ -8,12 +8,8 @@
 </head>
 <body>
 
-<header th:fragment="header" class="site-header">
-	<a class="brand" th:href="@{/}">Mr Tovo</a>
-	<nav>
-		<a th:href="@{/}">Accueil</a>
-	</nav>
-</header>
+<!-- Ancien nom gardé pour les pages existantes : utiliser fragments/entete :: entete -->
+<header th:fragment="header" th:replace="~{fragments/entete :: entete}"></header>
 
 <footer th:fragment="footer" class="site-footer">
 	<p>&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Groupe</p>

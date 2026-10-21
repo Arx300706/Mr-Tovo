@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/entete :: entete}"></header>
+
+<div class="page-connectee">
+	<aside th:replace="~{fragments/menu :: menu(actif='admin-comptes')}"></aside>
+
+	<main class="contenu">
+		<h1>Comptes</h1>
+
+		<p class="alerte alerte-succes" th:if="${succes}" th:text="${succes}">Compte EMP002 créé.</p>
+		<p class="alerte alerte-erreur" th:if="${erreur}" th:text="${erreur}">Un compte existe déjà avec l'identifiant EMP002</p>
+
+		<section class="carte">
+			<h2>Nouveau compte employé</h2>
+			<form class="formulaire formulaire-ligne" method="post" th:action="@{/admin/comptes}" th:object="${formulaire}">
+				<div class="champ">
+					<label for="identifiant">Matricule</label>
+					<input id="identifiant" type="text" th:field="*{identifiant}" required placeholder="EMP002">
+					<span class="erreur-champ" th:if="${#fields.hasErrors('identifiant')}" th:errors="*{identifiant}">Erreur</span>
+				</div>
+				<div class="champ">
+					<label for="role">Rôle</label>
+					<select id="role" th:field="*{role}" required>
+						<option value="">— choisir —</option>
+						<option th:each="r : ${roles}" th:value="${r}" th:text="${r.libelle}">Ressources humaines</option>
+					</select>
+					<span class="erreur-champ" th:if="${#fields.hasErrors('role')}" th:errors="*{role}">Erreur</span>
+				</div>
+				<div class="champ">
+					<label for="idEmploye">N° employé (facultatif)</label>
+					<input id="idEmploye" type="number" min="1" th:field="*{idEmploye}">
+				</div>
+				<div class="champ">
+					<label for="motDePasse">Mot de passe initial</label>
+					<input id="motDePasse" type="password" th:field="*{motDePasse}" required autocomplete="new-password">
+					<span class="erreur-champ" th:if="${#fields.hasErrors('motDePasse')}" th:errors="*{motDePasse}">Erreur</span>
+				</div>
+				<button type="submit">Créer le compte</button>
+			</form>
+		</section>
+
+		<section class="carte">
+			<h2>Tous les comptes</h2>
+			<div class="tableau-defilant">
+				<table class="tableau">
+					<thead>
+						<tr>
+							<th>Identifiant</th>
+							<th>Rôle</th>
+							<th>État</th>
+							<th>Créé le</th>
+							<th>Mot de passe</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody th:remove="all-but-first">
+						<tr th:each="compte : ${comptes}" th:classappend="${!compte.actif} ? 'inactif'">
+							<td th:text="${compte.identifiant}">rh</td>
+							<td>
+								<span th:if="${compte.role.estCandidat() or compte.idCompte == utilisateur?.idCompte}"
+									  th:text="${compte.role.libelle}">Candidat</span>
+								<form class="en-ligne" method="post" th:action="@{/admin/comptes/{id}/role(id=${compte.idCompte})}"
+									  th:unless="${compte.role.estCandidat() or compte.idCompte == utilisateur?.idCompte}">
+									<select name="role" aria-label="Rôle">
+										<option th:each="r : ${roles}" th:value="${r}" th:text="${r.libelle}"
+												th:selected="${r == compte.role}">Ressources humaines</option>
+									</select>
+									<button type="submit" class="bouton-petit">OK</button>
+								</form>
+							</td>
+							<td>
+								<span class="badge badge-succes" th:if="${compte.actif}">Actif</span>
+								<span class="badge badge-neutre" th:unless="${compte.actif}">Désactivé</span>
+							</td>
+							<td th:text="${#temporals.format(compte.dateCreation, 'dd/MM/yyyy')}">20/10/2026</td>
+							<td>
+								<form class="en-ligne" method="post" th:action="@{/admin/comptes/{id}/mot-de-passe(id=${compte.idCompte})}">
+									<input type="password" name="motDePasse" minlength="8" required placeholder="nouveau" aria-label="Nouveau mot de passe" autocomplete="new-password">
+									<button type="submit" class="bouton-petit">Réinitialiser</button>
+								</form>
+							</td>
+							<td>
+								<th:block th:unless="${compte.idCompte == utilisateur?.idCompte}">
+									<form class="en-ligne" method="post" th:if="${compte.actif}" th:action="@{/admin/comptes/{id}/desactiver(id=${compte.idCompte})}">
+										<button type="submit" class="bouton-petit bouton-danger">Désactiver</button>
+									</form>
+									<form class="en-ligne" method="post" th:unless="${compte.actif}" th:action="@{/admin/comptes/{id}/activer(id=${compte.idCompte})}">
+										<button type="submit" class="bouton-petit">Activer</button>
+									</form>
+								</th:block>
+								<small th:if="${compte.idCompte == utilisateur?.idCompte}">(vous)</small>
+							</td>
+						</tr>
+						<tr>
+							<td>EMP001</td><td>Employé</td><td><span class="badge badge-succes">Actif</span></td>
+							<td>20/10/2026</td><td></td><td><button class="bouton-petit bouton-danger">Désactiver</button></td>
+						</tr>
+						<tr class="inactif">
+							<td>candidat1@mrtovo.local</td><td>Candidat</td><td><span class="badge badge-neutre">Désactivé</span></td>
+							<td>20/10/2026</td><td></td><td><button class="bouton-petit">Activer</button></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+	</main>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

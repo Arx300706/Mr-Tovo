@@ -10,13 +10,21 @@ USE mr_tovo;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS journal_audit;
+DROP TABLE IF EXISTS document;
+DROP TABLE IF EXISTS onboarding_tache;
+DROP TABLE IF EXISTS onboarding;
 DROP TABLE IF EXISTS historique_employe;
 DROP TABLE IF EXISTS grille_salaire;
 DROP TABLE IF EXISTS contrat;
 DROP TABLE IF EXISTS proposition;
+DROP TABLE IF EXISTS evaluation_candidat;
+DROP TABLE IF EXISTS entretien;
 DROP TABLE IF EXISTS compte;
+DROP TABLE IF EXISTS candidat;
 DROP TABLE IF EXISTS candidature;
 DROP TABLE IF EXISTS offre;
+DROP TABLE IF EXISTS validation;
 DROP TABLE IF EXISTS besoin;
 DROP TABLE IF EXISTS employe;
 DROP TABLE IF EXISTS poste;
@@ -133,6 +141,7 @@ CREATE TABLE besoin (
     id_statut_besoin  INT NOT NULL,
     id_departement    INT NOT NULL,
     id_service        INT NULL,
+    id_poste          INT NULL,              -- poste concerné ou créé
     intitule          VARCHAR(150) NOT NULL,
     nombre            INT NOT NULL DEFAULT 1,
     sexe              ENUM('H', 'F') NULL,   -- NULL = indifférent
@@ -155,69 +164,139 @@ CREATE TABLE besoin (
         FOREIGN KEY (id_departement) REFERENCES departement (id_departement),
     CONSTRAINT fk_besoin_service
         FOREIGN KEY (id_service) REFERENCES service (id_service),
+    CONSTRAINT fk_besoin_poste
+        FOREIGN KEY (id_poste) REFERENCES poste (id_poste),
     CONSTRAINT fk_besoin_type_contrat
         FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat)
 ) ENGINE = InnoDB;
 
+-- Circuit de validation d'un besoin : une ligne par étape (envoi RH, finance…)
+CREATE TABLE validation (
+    id_validation   INT AUTO_INCREMENT PRIMARY KEY,
+    id_besoin       INT NOT NULL,
+    etape           VARCHAR(100) NOT NULL,   -- ex. envoye_rh, envoye_finance
+    decision        VARCHAR(50)  NULL,       -- ex. approuve, refuse, completer
+    commentaire     VARCHAR(1000) NULL,
+    date_validation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_employe      INT NULL,                -- employé qui a validé
+    CONSTRAINT fk_validation_besoin
+        FOREIGN KEY (id_besoin) REFERENCES besoin (id_besoin),
+    CONSTRAINT fk_validation_employe
+        FOREIGN KEY (id_employe) REFERENCES employe (id_employe)
+) ENGINE = InnoDB;
+
+-- Offre d'emploi (BK2) : vient d'un besoin validé ; visible au public si « publiée » et non expirée
 CREATE TABLE offre (
     id_offre          INT AUTO_INCREMENT PRIMARY KEY,
-    id_besoin         INT NOT NULL,
-    intitule          VARCHAR(150) NOT NULL,
-    id_departement    INT NOT NULL,
-    id_service        INT NULL,
+    id_besoin         INT NULL,
+    id_poste          INT NULL,
+    id_departement    INT NULL,
+    titre             VARCHAR(150) NOT NULL,
     description       TEXT NULL,
-    date_creation     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    date_fin          DATE NULL,
-    date_modification DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    profil            TEXT NULL,
+    id_type_contrat   INT NULL,
+    lieu              VARCHAR(150) NULL,
+    date_publication  DATE NULL,
+    date_limite       DATE NULL,            -- NULL = pas de date limite
     id_statut_offre   INT NOT NULL,
+    date_creation     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_modification DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_offre_besoin
         FOREIGN KEY (id_besoin) REFERENCES besoin (id_besoin),
+    CONSTRAINT fk_offre_poste
+        FOREIGN KEY (id_poste) REFERENCES poste (id_poste),
     CONSTRAINT fk_offre_departement
         FOREIGN KEY (id_departement) REFERENCES departement (id_departement),
-    CONSTRAINT fk_offre_service
-        FOREIGN KEY (id_service) REFERENCES service (id_service),
-    CONSTRAINT fk_offre_statut_offre
+    CONSTRAINT fk_offre_type_contrat
+        FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat),
+    CONSTRAINT fk_offre_statut
         FOREIGN KEY (id_statut_offre) REFERENCES statut_offre (id_statut_offre)
 ) ENGINE = InnoDB;
 
+-- CANDIDAT ≠ EMPLOYÉ : une personne peut avoir plusieurs candidatures avant d'être embauchée
+CREATE TABLE candidat (
+    id_candidat INT AUTO_INCREMENT PRIMARY KEY,
+    nom         VARCHAR(100) NOT NULL,
+    prenom      VARCHAR(100) NOT NULL,
+    email       VARCHAR(150) NOT NULL UNIQUE,
+    telephone   VARCHAR(30)  NULL
+) ENGINE = InnoDB;
+
+-- Une seule candidature par candidat et par offre
 CREATE TABLE candidature (
     id_candidature        INT AUTO_INCREMENT PRIMARY KEY,
-    id_compte             INT NULL,    -- FK vers compte (ajoutée plus bas)
-    date_candidature      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_departement        INT NOT NULL,
-    id_employe            INT NULL,    -- renseigné si candidat interne / ancien employé
+    id_candidat           INT NOT NULL,
     id_offre              INT NOT NULL,
+    date_candidature      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lettre                TEXT NULL,
+    id_document_cv        INT NULL,     -- document de la GED (BK0-05), vide tant qu'elle n'est pas prête
     id_statut_candidature INT NOT NULL,
-    id_type_candidature   INT NOT NULL,
-    id_type_contrat       INT NOT NULL,
-    date_test_technique   DATETIME NULL,
-    date_entretien        DATETIME NULL,
+    id_type_candidature   INT NULL,
+    motif_rejet           VARCHAR(500) NULL,
     date_modification     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_candidature_departement
-        FOREIGN KEY (id_departement) REFERENCES departement (id_departement),
-    CONSTRAINT fk_candidature_employe
-        FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+    CONSTRAINT uq_candidature_candidat_offre UNIQUE (id_candidat, id_offre),
+    CONSTRAINT fk_candidature_candidat
+        FOREIGN KEY (id_candidat) REFERENCES candidat (id_candidat),
     CONSTRAINT fk_candidature_offre
         FOREIGN KEY (id_offre) REFERENCES offre (id_offre),
     CONSTRAINT fk_candidature_statut
         FOREIGN KEY (id_statut_candidature) REFERENCES statut_candidature (id_statut_candidature),
     CONSTRAINT fk_candidature_type
-        FOREIGN KEY (id_type_candidature) REFERENCES type_candidature (id_type_candidature),
-    CONSTRAINT fk_candidature_type_contrat
-        FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat)
+        FOREIGN KEY (id_type_candidature) REFERENCES type_candidature (id_type_candidature)
 ) ENGINE = InnoDB;
 
+-- Compte de connexion : employé (identifiant = matricule) OU candidat (identifiant = e-mail)
 CREATE TABLE compte (
-    id_compte      INT AUTO_INCREMENT PRIMARY KEY,
-    date_creation  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_candidature INT NULL,
-    CONSTRAINT fk_compte_candidature
-        FOREIGN KEY (id_candidature) REFERENCES candidature (id_candidature)
+    id_compte     INT AUTO_INCREMENT PRIMARY KEY,
+    identifiant   VARCHAR(150) NOT NULL UNIQUE,
+    mot_de_passe  VARCHAR(255) NOT NULL,  -- chiffré (BCrypt)
+    role          VARCHAR(20)  NOT NULL,  -- CANDIDAT, EMPLOYE, MANAGER, RH, FINANCE, ADMIN
+    id_employe    INT NULL,
+    id_candidat   INT NULL,
+    actif         BOOLEAN NOT NULL DEFAULT TRUE,
+    date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_compte_personne CHECK (id_employe IS NULL OR id_candidat IS NULL),
+    CONSTRAINT fk_compte_employe
+        FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+    CONSTRAINT fk_compte_candidat
+        FOREIGN KEY (id_candidat) REFERENCES candidat (id_candidat)
+) ENGINE = InnoDB;
+
+CREATE TABLE entretien (
+    id_entretien   INT AUTO_INCREMENT PRIMARY KEY,
+    id_candidature INT NOT NULL,
+    type           VARCHAR(20)  NOT NULL,                   -- TELEPHONIQUE, PHYSIQUE, VISIO
+    date_entretien DATETIME     NOT NULL,
+    lieu           VARCHAR(200) NULL,                       -- salle ou lien visio
+    id_evaluateur  INT NULL,                                -- compte de l'évaluateur
+    statut         VARCHAR(20)  NOT NULL DEFAULT 'PLANIFIE', -- PLANIFIE, REALISE, ANNULE
+    CONSTRAINT fk_entretien_candidature
+        FOREIGN KEY (id_candidature) REFERENCES candidature (id_candidature),
+    CONSTRAINT fk_entretien_evaluateur
+        FOREIGN KEY (id_evaluateur) REFERENCES compte (id_compte)
+) ENGINE = InnoDB;
+
+-- Une évaluation par évaluateur et par entretien
+CREATE TABLE evaluation_candidat (
+    id_evaluation   INT AUTO_INCREMENT PRIMARY KEY,
+    id_entretien    INT NOT NULL,
+    note            INT NOT NULL,                           -- sur 20
+    avis            VARCHAR(20) NOT NULL,                   -- FAVORABLE, RESERVE, DEFAVORABLE
+    commentaire     TEXT NULL,
+    id_evaluateur   INT NOT NULL,
+    date_evaluation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_evaluation_note CHECK (note BETWEEN 0 AND 20),
+    CONSTRAINT uq_evaluation_entretien_evaluateur UNIQUE (id_entretien, id_evaluateur),
+    CONSTRAINT fk_evaluation_entretien
+        FOREIGN KEY (id_entretien) REFERENCES entretien (id_entretien),
+    CONSTRAINT fk_evaluation_evaluateur
+        FOREIGN KEY (id_evaluateur) REFERENCES compte (id_compte)
 ) ENGINE = InnoDB;
 
 CREATE TABLE proposition (
     id_proposition        INT AUTO_INCREMENT PRIMARY KEY,
     id_offre              INT NOT NULL,
+    id_candidature        INT NULL,    -- candidature retenue
     salaire               DECIMAL(15, 2) NOT NULL,
     id_type_contrat       INT NOT NULL,
     date_commencement     DATE NOT NULL,
@@ -228,6 +307,8 @@ CREATE TABLE proposition (
     CONSTRAINT chk_proposition_dates CHECK (date_fin IS NULL OR date_fin >= date_commencement),
     CONSTRAINT fk_proposition_offre
         FOREIGN KEY (id_offre) REFERENCES offre (id_offre),
+    CONSTRAINT fk_proposition_candidature
+        FOREIGN KEY (id_candidature) REFERENCES candidature (id_candidature),
     CONSTRAINT fk_proposition_type_contrat
         FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat),
     CONSTRAINT fk_proposition_statut
@@ -240,6 +321,11 @@ CREATE TABLE contrat (
     id_proposition    INT NULL,
     id_statut_contrat INT NOT NULL,
     id_type_contrat   INT NOT NULL,
+    date_debut        DATE NULL,
+    date_fin          DATE NULL,   -- NULL pour un CDI
+    salaire           DECIMAL(15, 2) NULL,
+    id_contrat_precedent INT NULL, -- renouvellement / avenant
+    CONSTRAINT chk_contrat_dates CHECK (date_fin IS NULL OR date_debut IS NULL OR date_fin >= date_debut),
     CONSTRAINT fk_contrat_employe
         FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
     CONSTRAINT fk_contrat_proposition
@@ -247,7 +333,9 @@ CREATE TABLE contrat (
     CONSTRAINT fk_contrat_statut
         FOREIGN KEY (id_statut_contrat) REFERENCES statut_contrat (id_statut_contrat),
     CONSTRAINT fk_contrat_type
-        FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat)
+        FOREIGN KEY (id_type_contrat) REFERENCES type_contrat (id_type_contrat),
+    CONSTRAINT fk_contrat_precedent
+        FOREIGN KEY (id_contrat_precedent) REFERENCES contrat (id_contrat)
 ) ENGINE = InnoDB;
 
 CREATE TABLE historique_employe (
@@ -276,6 +364,71 @@ CREATE TABLE grille_salaire (
 ) ENGINE = InnoDB;
 
 -- =====================================================================
+--  Onboarding (BK4) et documents (GED, BK0-05)
+-- =====================================================================
+
+CREATE TABLE onboarding (
+    id_onboarding INT AUTO_INCREMENT PRIMARY KEY,
+    id_employe    INT NOT NULL,
+    date_debut    DATE NULL,
+    statut        VARCHAR(20) NOT NULL DEFAULT 'EN_COURS', -- EN_COURS, TERMINE, ABANDONNE
+    progression   INT NOT NULL DEFAULT 0,                  -- en %
+    CONSTRAINT chk_onboarding_progression CHECK (progression BETWEEN 0 AND 100),
+    CONSTRAINT fk_onboarding_employe
+        FOREIGN KEY (id_employe) REFERENCES employe (id_employe)
+) ENGINE = InnoDB;
+
+CREATE TABLE onboarding_tache (
+    id_onboarding_tache INT AUTO_INCREMENT PRIMARY KEY,
+    id_onboarding       INT NOT NULL,
+    libelle             VARCHAR(150) NOT NULL,
+    categorie           VARCHAR(30)  NULL,                   -- CONTRAT_SIGNE, BADGE, COMPTE_INFORMATIQUE…
+    id_responsable      INT NULL,
+    echeance            DATE NULL,
+    statut              VARCHAR(20)  NOT NULL DEFAULT 'A_FAIRE', -- A_FAIRE, FAIT, NON_APPLICABLE
+    CONSTRAINT fk_onboarding_tache_onboarding
+        FOREIGN KEY (id_onboarding) REFERENCES onboarding (id_onboarding),
+    CONSTRAINT fk_onboarding_tache_responsable
+        FOREIGN KEY (id_responsable) REFERENCES employe (id_employe)
+) ENGINE = InnoDB;
+
+-- Document rattaché à un candidat, un employé, un contrat ou une tâche d'onboarding
+CREATE TABLE document (
+    id_document         INT AUTO_INCREMENT PRIMARY KEY,
+    type                VARCHAR(30)  NOT NULL,   -- CV, CONTRAT_SIGNE, PIECE_IDENTITE, JUSTIFICATIF_DOMICILE, DIPLOME, AUTRE
+    nom_fichier         VARCHAR(255) NULL,
+    fichier             LONGBLOB     NULL,
+    date_document       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_candidat         INT NULL,
+    id_employe          INT NULL,
+    id_contrat          INT NULL,
+    id_onboarding_tache INT NULL,
+    CONSTRAINT fk_document_candidat
+        FOREIGN KEY (id_candidat) REFERENCES candidat (id_candidat),
+    CONSTRAINT fk_document_employe
+        FOREIGN KEY (id_employe) REFERENCES employe (id_employe),
+    CONSTRAINT fk_document_contrat
+        FOREIGN KEY (id_contrat) REFERENCES contrat (id_contrat),
+    CONSTRAINT fk_document_onboarding_tache
+        FOREIGN KEY (id_onboarding_tache) REFERENCES onboarding_tache (id_onboarding_tache)
+) ENGINE = InnoDB;
+
+-- =====================================================================
+--  Journal d'audit (BK0) : une ligne par action, jamais effacée
+-- =====================================================================
+
+CREATE TABLE journal_audit (
+    id_journal_audit INT AUTO_INCREMENT PRIMARY KEY,
+    date_action      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    auteur           VARCHAR(150) NOT NULL,  -- identifiant du compte, ou 'systeme'
+    action           VARCHAR(50)  NOT NULL,
+    objet            VARCHAR(50)  NOT NULL,
+    id_objet         INT          NULL,
+    detail           VARCHAR(500) NULL,
+    INDEX idx_journal_audit_date (date_action)
+) ENGINE = InnoDB;
+
+-- =====================================================================
 --  Clés étrangères circulaires (ajoutées après création des tables)
 -- =====================================================================
 
@@ -288,8 +441,8 @@ ALTER TABLE employe
         FOREIGN KEY (id_contrat) REFERENCES contrat (id_contrat);
 
 ALTER TABLE candidature
-    ADD CONSTRAINT fk_candidature_compte
-        FOREIGN KEY (id_compte) REFERENCES compte (id_compte);
+    ADD CONSTRAINT fk_candidature_document_cv
+        FOREIGN KEY (id_document_cv) REFERENCES document (id_document);
 
 -- =====================================================================
 --  Données de référence
@@ -308,10 +461,10 @@ INSERT INTO type_besoin (libelle) VALUES
     ('creation poste'), ('recherche personnel'), ('recherche stagiaire');
 
 INSERT INTO statut_offre (libelle) VALUES
-    ('enregistre'), ('cree'), ('publie'), ('fin');
+    ('brouillon'), ('publiée'), ('clôturée'), ('pourvue'), ('annulée');
 
 INSERT INTO statut_candidature (libelle) VALUES
-    ('cree'), ('selectionne'), ('teste techniquement'), ('entretien ok'), ('rejete');
+    ('reçue'), ('présélectionnée'), ('en entretien'), ('retenue'), ('rejetée'), ('retirée'), ('embauchée');
 
 INSERT INTO type_candidature (libelle) VALUES
     ('employe'), ('externe'), ('ancienne relation');
