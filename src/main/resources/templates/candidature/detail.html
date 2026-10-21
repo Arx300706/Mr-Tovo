@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Candidature')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu" th:with="c=${candidature}, besoin=${candidature.offre.besoin}, s=${candidature.statut.libelle}">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/rh/candidatures}">← Candidatures</a></p>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="${c.compte.nomComplet}">Candidat</h1>
+                <p th:text="'Candidature n°' + ${c.id} + ' à « ' + ${c.offre.intitule} + ' » du ' + ${#temporals.format(c.dateCandidature, 'dd/MM/yyyy')}"></p>
+            </div>
+            <span th:replace="~{fragments/layout :: statut(${s})}"></span>
+        </div>
+
+        <div class="grille-2">
+            <div>
+                <!-- ===== Actions RH selon le statut ===== -->
+                <div class="carte" th:if="${s == 'cree' or s == 'selectionne'}">
+                    <h2 th:text="${s == 'cree'} ? 'Sélectionner et planifier les épreuves' : 'Modifier les dates'">Planifier</h2>
+                    <form th:action="@{/rh/candidatures/{id}/planifier(id=${c.id})}" th:object="${planification}" method="post" novalidate>
+                        <div class="ligne">
+                            <div class="champ">
+                                <label for="dateTestTechnique">Test technique</label>
+                                <input type="datetime-local" th:field="*{dateTestTechnique}">
+                                <div class="erreur-champ" th:errors="*{dateTestTechnique}"></div>
+                            </div>
+                            <div class="champ">
+                                <label for="dateEntretien">Entretien</label>
+                                <input type="datetime-local" th:field="*{dateEntretien}">
+                                <div class="erreur-champ" th:errors="*{dateEntretien}"></div>
+                            </div>
+                        </div>
+                        <div class="champ">
+                            <label for="commentaire">Commentaire</label>
+                            <input type="text" th:field="*{commentaire}">
+                        </div>
+                        <button type="submit" class="bouton" th:text="${s == 'cree'} ? 'Sélectionner la candidature' : 'Enregistrer les dates'">Sélectionner</button>
+                    </form>
+                </div>
+
+                <div class="carte" th:if="${s == 'selectionne' or s == 'teste techniquement' or s == 'entretien ok'}">
+                    <h2>Résultat des épreuves</h2>
+                    <div class="actions">
+                        <form th:if="${s == 'selectionne'}" th:action="@{/rh/candidatures/{id}/teste(id=${c.id})}" method="post">
+                            <button type="submit" class="bouton">Test technique réussi</button>
+                        </form>
+                        <form th:if="${s == 'teste techniquement'}" th:action="@{/rh/candidatures/{id}/entretien-ok(id=${c.id})}" method="post">
+                            <button type="submit" class="bouton">Entretien réussi</button>
+                        </form>
+                        <form th:if="${s == 'entretien ok'}" th:action="@{/rh/candidatures/{id}/succes(id=${c.id})}" method="post">
+                            <button type="submit" class="bouton succes">Candidat retenu (succès)</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="carte" th:if="${s == 'succes'}">
+                    <h2>Proposition d'emploi</h2>
+                    <p th:if="${#lists.isEmpty(propositions)}" class="doux">Le candidat a réussi : créez sa proposition d'emploi.</p>
+                    <ul th:unless="${#lists.isEmpty(propositions)}">
+                        <li th:each="p : ${propositions}">
+                            <a th:href="@{/rh/propositions/{id}(id=${p.id})}" th:text="'Proposition n°' + ${p.id}"></a>
+                            <span th:replace="~{fragments/layout :: statut(${p.statut.libelle})}"></span>
+                        </li>
+                    </ul>
+                    <a class="bouton" th:if="${#lists.isEmpty(propositions.?[statut.libelle != 'refuse'])}"
+                       th:href="@{/rh/propositions/nouvelle(candidature=${c.id})}">Créer la proposition d'emploi</a>
+                </div>
+
+                <div class="carte" th:if="${s == 'cree' or s == 'selectionne' or s == 'teste techniquement' or s == 'entretien ok'}">
+                    <h2>Rejeter</h2>
+                    <form th:action="@{/rh/candidatures/{id}/rejeter(id=${c.id})}" method="post"
+                          data-confirmer="Rejeter cette candidature ?">
+                        <div class="champ"><input type="text" name="commentaire" placeholder="Motif (facultatif)"></div>
+                        <button type="submit" class="bouton danger">Rejeter la candidature</button>
+                    </form>
+                </div>
+
+                <!-- ===== Dossier du candidat ===== -->
+                <div class="carte">
+                    <h2>Dossier</h2>
+                    <dl class="fiche">
+                        <dt>Type de candidat</dt>
+                        <dd>
+                            <span th:text="${c.typeCandidature.libelle}"></span>
+                            <span class="doux" th:if="${c.employe != null}"
+                                  th:text="'— matricule ' + ${c.employe.matricule} + (${c.employe.posteActuel != null} ? ', poste actuel : ' + ${c.employe.posteActuel.libelle} : '')"></span>
+                        </dd>
+                        <dt>E-mail</dt><dd th:text="${c.compte.email}"></dd>
+                        <dt>Téléphone</dt><dd th:text="${c.compte.telephone ?: '—'}"></dd>
+                        <dt>Âge</dt>
+                        <dd>
+                            <span th:text="${c.compte.age != null ? c.compte.age + ' ans' : '—'}"></span>
+                            <span class="doux" th:if="${besoin.ageMin != null or besoin.ageMax != null}"
+                                  th:text="'(demandé : ' + (${besoin.ageMin} ?: '…') + ' – ' + (${besoin.ageMax} ?: '…') + ' ans)'"></span>
+                        </dd>
+                        <dt>Sexe</dt>
+                        <dd>
+                            <span th:text="${c.compte.sexe ?: '—'}"></span>
+                            <span class="doux" th:if="${besoin.sexe != null}" th:text="'(demandé : ' + ${besoin.sexe} + ')'"></span>
+                        </dd>
+                        <dt>Adresse</dt><dd th:text="${c.compte.adresse ?: '—'}"></dd>
+                        <dt>Diplôme</dt><dd th:text="${c.diplome}"></dd>
+                        <dt>Expérience</dt><dd th:text="${c.anneesExperience} + ' an(s)'"></dd>
+                        <dt>Contrat visé</dt><dd th:text="${c.typeContrat.libelle}"></dd>
+                        <dt>Test technique</dt><dd th:text="${c.dateTestTechnique != null ? #temporals.format(c.dateTestTechnique, 'dd/MM/yyyy HH:mm') : '—'}"></dd>
+                        <dt>Entretien</dt><dd th:text="${c.dateEntretien != null ? #temporals.format(c.dateEntretien, 'dd/MM/yyyy HH:mm') : '—'}"></dd>
+                        <th:block th:if="${c.commentaireRh}"><dt>Commentaire RH</dt><dd th:text="${c.commentaireRh}"></dd></th:block>
+                    </dl>
+                    <h3>Lettre de motivation</h3>
+                    <p class="texte-long" th:text="${c.lettreMotivation}"></p>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: historique(${historique})}"></div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

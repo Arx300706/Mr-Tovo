@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Connexion')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div class="connexion">
+            <h1>Connexion</h1>
+            <p class="doux">Choisissez votre espace.</p>
+
+            <div class="message erreur" th:if="${param.erreur}">Identifiant ou mot de passe incorrect.</div>
+
+            <div class="onglets">
+                <button type="button" class="actif" data-onglet="employe">Employé</button>
+                <button type="button" data-onglet="candidat">Candidat</button>
+            </div>
+
+            <form class="carte" data-panneau="employe" th:action="@{/connexion}" method="post">
+                <div class="champ">
+                    <label for="matricule">Matricule</label>
+                    <input type="text" id="matricule" name="identifiant" autocomplete="username" required autofocus>
+                </div>
+                <div class="champ">
+                    <label for="mdp-employe">Mot de passe</label>
+                    <input type="password" id="mdp-employe" name="motDePasse" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="bouton">Se connecter</button>
+            </form>
+
+            <form class="carte cache" data-panneau="candidat" th:action="@{/connexion}" method="post">
+                <p class="doux">Votre compte candidat est créé quand vous postulez à une offre.</p>
+                <div class="champ">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="identifiant" autocomplete="username" required>
+                </div>
+                <div class="champ">
+                    <label for="mdp-candidat">Mot de passe</label>
+                    <input type="password" id="mdp-candidat" name="motDePasse" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="bouton">Se connecter</button>
+            </form>
+        </div>
+    </main>
+</div>
+</body>
+</html>

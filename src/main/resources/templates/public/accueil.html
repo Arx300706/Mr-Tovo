@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Offres d’emploi')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="message info" th:if="${param.deconnecte}">Vous êtes déconnecté.</div>
+
+        <section class="hero">
+            <h1>Rejoignez notre équipe</h1>
+            <p>Consultez nos offres d'emploi et postulez en quelques minutes. Votre compte candidat vous permet ensuite
+                de suivre votre candidature, nos messages, nos propositions et votre contrat.</p>
+        </section>
+
+        <div class="entete-page">
+            <div>
+                <h2 th:text="${#lists.size(offres)} + ' offre(s) ouverte(s)'">Offres</h2>
+            </div>
+        </div>
+
+        <p class="carte vide" th:if="${#lists.isEmpty(offres)}">Aucune offre publiée pour le moment.</p>
+
+        <div class="grille">
+            <article class="carte offre-carte" th:each="o : ${offres}">
+                <h2 th:text="${o.intitule}">Intitulé</h2>
+                <div class="meta">
+                    <span th:text="${o.departement.libelle} + ' · ' + ${o.service.libelle}"></span><br>
+                    <span th:text="${o.besoin.typeContrat.libelle} + ' · ' + ${o.besoin.nombre} + ' poste(s)'"></span><br>
+                    <span th:if="${o.dateFin}" th:text="'Candidatures jusqu’au ' + ${#temporals.format(o.dateFin, 'dd/MM/yyyy')}"></span>
+                </div>
+                <p th:text="${#strings.abbreviate(o.description, 160)}"></p>
+                <div class="actions">
+                    <a class="bouton secondaire" th:href="@{/offres/{id}(id=${o.id})}">Voir l'offre</a>
+                    <a class="bouton" th:href="@{/offres/{id}/candidater(id=${o.id})}">Postuler</a>
+                </div>
+            </article>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${offre.intitule})}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/}">← Toutes les offres</a></p>
+
+        <div class="entete-page">
+            <div>
+                <h1 th:text="${offre.intitule}">Intitulé</h1>
+                <p th:text="${offre.departement.libelle} + ' · ' + ${offre.service.libelle}"></p>
+            </div>
+            <a class="bouton" th:if="${offre.estOuverte()}" th:href="@{/offres/{id}/candidater(id=${offre.id})}">Postuler à cette offre</a>
+            <span class="message alerte" th:unless="${offre.estOuverte()}">Cette offre est clôturée.</span>
+        </div>
+
+        <div class="grille-2">
+            <div class="carte">
+                <h2>Description du poste</h2>
+                <p class="texte-long" th:text="${offre.description}"></p>
+                <th:block th:if="${offre.profil}">
+                    <h2>Profil recherché</h2>
+                    <p class="texte-long" th:text="${offre.profil}"></p>
+                </th:block>
+            </div>
+            <div class="carte">
+                <h2>En bref</h2>
+                <dl class="fiche">
+                    <dt>Contrat</dt><dd th:text="${offre.besoin.typeContrat.libelle}"></dd>
+                    <dt>Postes</dt><dd th:text="${offre.besoin.nombre}"></dd>
+                    <dt>Début</dt><dd th:text="${offre.besoin.dateCommencement != null ? #temporals.format(offre.besoin.dateCommencement, 'dd/MM/yyyy') : 'Dès que possible'}"></dd>
+                    <dt>Date limite</dt><dd th:text="${offre.dateFin != null ? #temporals.format(offre.dateFin, 'dd/MM/yyyy') : '—'}"></dd>
+                    <th:block th:if="${offre.besoin.ageMin != null or offre.besoin.ageMax != null}">
+                        <dt>Âge</dt>
+                        <dd th:text="${(offre.besoin.ageMin ?: '…') + ' – ' + (offre.besoin.ageMax ?: '…') + ' ans'}"></dd>
+                    </th:block>
+                </dl>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

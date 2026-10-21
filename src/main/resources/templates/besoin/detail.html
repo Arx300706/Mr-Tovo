@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${besoin.intitule})}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="'Besoin n°' + ${besoin.id} + ' : ' + ${besoin.intitule}">Besoin</h1>
+                <p th:text="${besoin.departement.libelle} + ' · ' + ${besoin.service.libelle} + ' — exprimé par ' + ${besoin.manager.nomComplet} + ' le ' + ${#temporals.format(besoin.dateCreation, 'dd/MM/yyyy')}"></p>
+            </div>
+            <span th:replace="~{fragments/layout :: statut(${besoin.statut.libelle})}"></span>
+        </div>
+
+        <div class="grille-2">
+            <div>
+                <div class="carte">
+                    <h2>Le besoin</h2>
+                    <dl class="fiche">
+                        <dt>Type</dt><dd th:text="${besoin.typeBesoin.libelle}"></dd>
+                        <dt>Poste concerné</dt><dd th:text="${besoin.poste != null ? besoin.poste.libelle : 'Nouveau poste'}"></dd>
+                        <dt>Nombre</dt><dd th:text="${besoin.nombre}"></dd>
+                        <dt>Type de contrat</dt><dd th:text="${besoin.typeContrat.libelle}"></dd>
+                        <dt>Sexe</dt><dd th:text="${besoin.sexe ?: 'Indifférent'}"></dd>
+                        <dt>Âge</dt><dd th:text="${(besoin.ageMin ?: '…') + ' – ' + (besoin.ageMax ?: '…') + ' ans'}"></dd>
+                        <dt>Commencement</dt><dd th:text="${besoin.dateCommencement != null ? #temporals.format(besoin.dateCommencement, 'dd/MM/yyyy') : '—'}"></dd>
+                        <dt>Budget estimé (mensuel)</dt><dd><span th:replace="~{fragments/layout :: montant(${besoin.budget})}"></span></dd>
+                        <dt>Motif</dt><dd class="texte-long" th:text="${besoin.motif}"></dd>
+                    </dl>
+                </div>
+
+                <div class="carte" th:if="${besoin.salaireMensuel != null}">
+                    <h2>Analyse RH et Finance</h2>
+                    <dl class="fiche">
+                        <dt>Salaire mensuel retenu</dt><dd><span th:replace="~{fragments/layout :: montant(${besoin.salaireMensuel})}"></span></dd>
+                        <dt>Commentaire RH</dt><dd class="texte-long" th:text="${besoin.commentaireRh ?: '—'}"></dd>
+                        <dt>Dépense annuelle</dt><dd><span th:replace="~{fragments/layout :: montant(${besoin.calculerDepenseAnnuelle()})}"></span></dd>
+                        <th:block th:if="${besoin.commentaireFinance}">
+                            <dt>Commentaire Finance</dt><dd class="texte-long" th:text="${besoin.commentaireFinance}"></dd>
+                        </th:block>
+                    </dl>
+                </div>
+
+                <!-- ===== RH : analyse avec la grille salariale puis envoi à la Finance ===== -->
+                <div class="carte" th:if="${utilisateur.aRole('RH') and besoin.statut.libelle == 'cree'}">
+                    <h2>Analyse RH</h2>
+                    <p class="doux" th:text="${besoin.poste != null} ? 'Grille salariale du poste « ' + ${besoin.poste.libelle} + ' » :' : 'Nouveau poste : comparez avec la grille salariale de l’entreprise :'"></p>
+                    <div class="tableau-conteneur">
+                        <table>
+                            <thead><tr><th>Poste</th><th>Ancienneté</th><th class="nombre">Salaire mensuel</th></tr></thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(grille)}"><td colspan="3" class="vide">Aucune grille pour ce poste.</td></tr>
+                            <tr th:each="g : ${grille}">
+                                <td th:text="${g.poste.libelle}"></td>
+                                <td th:text="${g.ancienneteMin} + ' à ' + ${g.ancienneteMax} + ' ans'"></td>
+                                <td class="nombre"><span th:replace="~{fragments/layout :: montant(${g.valeur})}"></span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <form th:action="@{/rh/besoins/{id}/envoyer-finance(id=${besoin.id})}" method="post" style="margin-top:1rem">
+                        <div class="ligne">
+                            <div class="champ">
+                                <label for="salaireMensuel">Salaire mensuel adéquat (Ar)</label>
+                                <input type="number" id="salaireMensuel" name="salaireMensuel" min="1" step="1000" required
+                                       th:value="${grille.size() > 0 and besoin.poste != null} ? ${grille[0].valeur.longValue()} : ''">
+                            </div>
+                        </div>
+                        <div class="champ">
+                            <label for="commentaire">Commentaire pour la Finance</label>
+                            <textarea id="commentaire" name="commentaire" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="bouton">Envoyer à la Finance</button>
+                    </form>
+                </div>
+
+                <!-- ===== Finance : dépense calculée automatiquement vs budget restant ===== -->
+                <div class="carte" th:if="${utilisateur.aRole('FINANCE') and besoin.statut.libelle == 'envoie Finance'}">
+                    <h2>Décision budgétaire</h2>
+                    <p class="doux" th:text="${besoin.nombre} + ' personne(s) × ' + ${#numbers.formatDecimal(besoin.salaireMensuel, 1, 'WHITESPACE', 0, 'POINT')} + ' Ar × 12 mois'"></p>
+                    <div class="grille">
+                        <div>
+                            <div class="doux">Dépense annuelle</div>
+                            <div class="chiffre"><span th:replace="~{fragments/layout :: montant(${depense})}"></span></div>
+                        </div>
+                        <div th:if="${budget != null}">
+                            <div class="doux" th:text="'Budget restant ' + ${budget.annee()}"></div>
+                            <div class="chiffre" th:classappend="${budget.couvre(depense)} ? 'ok' : 'ko'">
+                                <span th:replace="~{fragments/layout :: montant(${budget.restant()})}"></span></div>
+                        </div>
+                    </div>
+                    <div class="message alerte" th:if="${budget == null}">Aucun budget annuel n'est défini pour l'année de ce besoin.</div>
+                    <div class="message succes" th:if="${budget != null and budget.couvre(depense)}">Le budget restant couvre la dépense : le besoin peut être validé.</div>
+                    <div class="message erreur" th:if="${budget != null and !budget.couvre(depense)}">Budget insuffisant : le besoin doit être refusé.</div>
+
+                    <div class="champ">
+                        <label for="commentaire-finance">Commentaire</label>
+                        <textarea id="commentaire-finance" name="commentaire" form="form-valider" rows="2"></textarea>
+                    </div>
+                    <div class="actions">
+                        <form id="form-valider" th:if="${budget != null and budget.couvre(depense)}"
+                              th:action="@{/finance/besoins/{id}/valider(id=${besoin.id})}" method="post">
+                            <button type="submit" class="bouton succes">Valider (budget OK)</button>
+                        </form>
+                        <form th:action="@{/finance/besoins/{id}/refuser(id=${besoin.id})}" method="post"
+                              onsubmit="this.querySelector('[name=commentaire]').value = document.getElementById('commentaire-finance').value">
+                            <input type="hidden" name="commentaire">
+                            <button type="submit" class="bouton danger">Refuser</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ===== RH : création de l'offre ===== -->
+                <div class="carte" th:if="${besoin.statut.libelle == 'valide Finance'}">
+                    <h2>Offre d'emploi</h2>
+                    <p th:if="${offre != null}">
+                        <a th:href="@{/rh/offres/{id}(id=${offre.id})}" th:text="${offre.intitule}" th:if="${utilisateur.aRole('RH')}"></a>
+                        <span th:unless="${utilisateur.aRole('RH')}" th:text="${offre.intitule}"></span>
+                        <span th:replace="~{fragments/layout :: statut(${offre.statut.libelle})}"></span>
+                    </p>
+                    <th:block th:if="${offre == null}">
+                        <p class="doux">Aucune offre n'a encore été créée pour ce besoin.</p>
+                        <a class="bouton" th:if="${utilisateur.aRole('RH')}" th:href="@{/rh/offres/nouvelle(besoin=${besoin.id})}">Créer l'offre d'emploi</a>
+                    </th:block>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: historique(${historique})}"></div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

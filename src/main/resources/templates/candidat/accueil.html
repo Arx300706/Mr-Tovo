@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mon espace candidat')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="'Bonjour ' + ${utilisateur.nomComplet}">Bonjour</h1>
+                <p>Suivez ici vos candidatures, les propositions et les contrats de l'entreprise.</p>
+            </div>
+            <a class="bouton" th:href="@{/}">Voir les offres</a>
+        </div>
+
+        <div class="carte">
+            <h2>Mes candidatures</h2>
+            <div class="tableau-conteneur">
+                <table>
+                    <thead><tr><th>Offre</th><th>Déposée le</th><th>Statut</th><th>Test technique</th><th>Entretien</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(candidatures)}"><td colspan="6" class="vide">Aucune candidature.</td></tr>
+                    <tr th:each="c : ${candidatures}">
+                        <td th:text="${c.offre.intitule}"></td>
+                        <td th:text="${#temporals.format(c.dateCandidature, 'dd/MM/yyyy')}"></td>
+                        <td><span th:replace="~{fragments/layout :: statut(${c.statut.libelle})}"></span></td>
+                        <td th:text="${c.dateTestTechnique != null ? #temporals.format(c.dateTestTechnique, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                        <td th:text="${c.dateEntretien != null ? #temporals.format(c.dateEntretien, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                        <td><a th:href="@{/candidat/candidatures/{id}(id=${c.id})}">Détail</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="carte">
+            <h2>Propositions d'emploi
+                <span th:replace="~{fragments/layout :: pastille(${badges['propositions']})}"></span></h2>
+            <div class="tableau-conteneur">
+                <table>
+                    <thead><tr><th>Offre</th><th>Salaire</th><th>Contrat</th><th>Réponse avant le</th><th>Statut</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(propositions)}"><td colspan="6" class="vide">Aucune proposition pour le moment.</td></tr>
+                    <tr th:each="p : ${propositions}" th:classappend="${p.statut.libelle == 'enregistre'} ? 'mise-en-avant'">
+                        <td th:text="${p.offre.intitule}"></td>
+                        <td><span th:replace="~{fragments/layout :: montant(${p.salaire})}"></span></td>
+                        <td th:text="${p.typeContrat.libelle}"></td>
+                        <td th:text="${#temporals.format(p.dateLimiteValidation, 'dd/MM/yyyy')}"></td>
+                        <td>
+                            <span th:if="${p.statut.libelle == 'enregistre'}" class="statut en-attente">à répondre</span>
+                            <th:block th:unless="${p.statut.libelle == 'enregistre'}"><span th:replace="~{fragments/layout :: statut(${p.statut.libelle})}"></span></th:block>
+                        </td>
+                        <td><a th:href="@{/candidat/propositions/{id}(id=${p.id})}">Ouvrir</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="carte">
+            <h2>Contrats <span th:replace="~{fragments/layout :: pastille(${badges['contrats']})}"></span></h2>
+            <div class="tableau-conteneur">
+                <table>
+                    <thead><tr><th>Poste</th><th>Type</th><th>Début</th><th>Statut</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(contrats)}"><td colspan="5" class="vide">Aucun contrat.</td></tr>
+                    <tr th:each="c : ${contrats}" th:classappend="${c.statut.libelle == 'cree'} ? 'mise-en-avant'">
+                        <td th:text="${c.poste.libelle}"></td>
+                        <td th:text="${c.typeContrat.libelle}"></td>
+                        <td th:text="${#temporals.format(c.dateDebut, 'dd/MM/yyyy')}"></td>
+                        <td>
+                            <span th:if="${c.statut.libelle == 'cree'}" class="statut en-attente">à signer</span>
+                            <th:block th:unless="${c.statut.libelle == 'cree'}"><span th:replace="~{fragments/layout :: statut(${c.statut.libelle})}"></span></th:block>
+                        </td>
+                        <td><a th:href="@{/candidat/contrats/{id}(id=${c.id})}">Ouvrir</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

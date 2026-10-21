@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Contrat')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu" th:with="s=${contrat.statut.libelle}">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/rh/contrats}">← Contrats</a></p>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="'Contrat n°' + ${contrat.id}">Contrat</h1>
+                <p th:text="${contrat.candidature.compte.nomComplet} + ' — ' + ${contrat.candidature.offre.intitule}"></p>
+            </div>
+            <span th:replace="~{fragments/layout :: statut(${s})}"></span>
+        </div>
+
+        <div class="message info" th:if="${s == 'cree'}">En attente de la signature du candidat.</div>
+        <div class="message alerte" th:if="${s == 'signe'}">Le candidat a signé : signez à votre tour pour valider l'embauche, ou annulez.</div>
+        <div class="message succes" th:if="${s == 'valide' and contrat.employe != null}"
+             th:text="'Embauche effectuée : ' + ${contrat.employe.nomComplet} + ', matricule ' + ${contrat.employe.matricule} + '.'"></div>
+
+        <div class="grille-2">
+            <div class="carte">
+                <h2>Conditions</h2>
+                <dl class="fiche">
+                    <dt>Candidat</dt><dd th:text="${contrat.candidature.compte.nomComplet} + ' (' + ${contrat.candidature.typeCandidature.libelle} + ')'"></dd>
+                    <dt>Poste</dt><dd th:text="${contrat.poste.libelle}"></dd>
+                    <dt>Type</dt><dd th:text="${contrat.typeContrat.libelle}"></dd>
+                    <dt>Salaire mensuel</dt><dd><span th:replace="~{fragments/layout :: montant(${contrat.salaire})}"></span></dd>
+                    <dt>Début</dt><dd th:text="${#temporals.format(contrat.dateDebut, 'dd/MM/yyyy')}"></dd>
+                    <dt>Fin</dt><dd th:text="${contrat.dateFin != null ? #temporals.format(contrat.dateFin, 'dd/MM/yyyy') : 'Indéterminée'}"></dd>
+                    <dt>Proposition</dt><dd><a th:href="@{/rh/propositions/{id}(id=${contrat.proposition.id})}" th:text="'n°' + ${contrat.proposition.id}"></a></dd>
+                    <dt>Signature candidat</dt><dd th:text="${contrat.dateSignatureCandidat != null ? #temporals.format(contrat.dateSignatureCandidat, 'dd/MM/yyyy HH:mm') : '—'}"></dd>
+                    <dt>Signature RH</dt><dd th:text="${contrat.dateSignatureRh != null ? #temporals.format(contrat.dateSignatureRh, 'dd/MM/yyyy HH:mm') : '—'}"></dd>
+                </dl>
+                <div class="actions" style="margin-top:1rem">
+                    <form th:if="${s == 'signe'}" th:action="@{/rh/contrats/{id}/valider(id=${contrat.id})}" method="post">
+                        <button type="submit" class="bouton succes">Signer et valider l'embauche</button>
+                    </form>
+                    <form th:if="${s == 'cree' or s == 'signe'}" th:action="@{/rh/contrats/{id}/annuler(id=${contrat.id})}" method="post"
+                          data-confirmer="Annuler ce contrat ?">
+                        <button type="submit" class="bouton danger">Annuler le contrat</button>
+                    </form>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: historique(${historique})}"></div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
