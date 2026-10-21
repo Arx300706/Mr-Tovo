@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${titre})}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="${titre}">Besoins</h1>
+                <p th:text="${#lists.size(besoins)} + ' besoin(s)'"></p>
+            </div>
+            <a class="bouton" th:if="${peutCreer}" th:href="@{/manager/besoins/nouveau}">Exprimer un besoin</a>
+        </div>
+
+        <!-- Budget (vue Finance) -->
+        <div class="grille" th:if="${vueFinance}">
+            <div class="carte" th:if="${budget != null}">
+                <div class="doux" th:text="'Budget annuel ' + ${budget.annee()}"></div>
+                <div class="chiffre"><span th:replace="~{fragments/layout :: montant(${budget.montant()})}"></span></div>
+            </div>
+            <div class="carte" th:if="${budget != null}">
+                <div class="doux">Déjà engagé</div>
+                <div class="chiffre"><span th:replace="~{fragments/layout :: montant(${budget.engage()})}"></span></div>
+            </div>
+            <div class="carte" th:if="${budget != null}">
+                <div class="doux">Reste disponible</div>
+                <div class="chiffre ok"><span th:replace="~{fragments/layout :: montant(${budget.restant()})}"></span></div>
+            </div>
+            <div class="message alerte" th:if="${budget == null}">Aucun budget annuel défini pour cette année.</div>
+        </div>
+
+        <div class="filtres" th:if="${statuts}">
+            <a th:each="s : ${statuts}" th:href="@{${urlFiltre}(statut=${s.libelle})}" th:text="${s.libelle}"
+               th:classappend="${statut == s.libelle} ? 'actif'"></a>
+            <a th:href="@{${urlFiltre}(statut='')}" th:classappend="${statut == ''} ? 'actif'">tous</a>
+        </div>
+
+        <div class="carte tableau-conteneur">
+            <table>
+                <thead>
+                <tr>
+                    <th>Intitulé</th><th>Type</th><th>Département / service</th><th class="nombre">Nombre</th>
+                    <th>Contrat</th><th th:if="${vueFinance}" class="nombre">Dépense annuelle</th><th>Statut</th><th>Modifié le</th><th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(besoins)}"><td colspan="9" class="vide">Aucun besoin.</td></tr>
+                <tr th:each="b : ${besoins}">
+                    <td><a th:href="@{/besoins/{id}(id=${b.id})}" th:text="${b.intitule}"></a></td>
+                    <td th:text="${b.typeBesoin.libelle}"></td>
+                    <td th:text="${b.departement.libelle} + ' · ' + ${b.service.libelle}"></td>
+                    <td class="nombre" th:text="${b.nombre}"></td>
+                    <td th:text="${b.typeContrat.libelle}"></td>
+                    <td th:if="${vueFinance}" class="nombre"><span th:replace="~{fragments/layout :: montant(${b.calculerDepenseAnnuelle()})}"></span></td>
+                    <td><span th:replace="~{fragments/layout :: statut(${b.statut.libelle})}"></span></td>
+                    <td th:text="${#temporals.format(b.dateModification, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td>
+                        <a th:if="${vueCreationOffre}" class="bouton petit" th:href="@{/rh/offres/nouvelle(besoin=${b.id})}">Créer l'offre</a>
+                        <a th:unless="${vueCreationOffre}" class="bouton petit secondaire" th:href="@{/besoins/{id}(id=${b.id})}">Ouvrir</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

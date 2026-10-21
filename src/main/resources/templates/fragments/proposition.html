@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Fiche de la proposition (commune RH / candidat) -->
+<div class="carte" th:fragment="fiche(p)">
+    <h2>Proposition</h2>
+    <dl class="fiche">
+        <dt>Poste</dt><dd th:text="${p.poste.libelle}"></dd>
+        <dt>Département</dt><dd th:text="${p.offre.departement.libelle} + ' · ' + ${p.offre.service.libelle}"></dd>
+        <dt>Salaire mensuel</dt><dd><span th:replace="~{fragments/layout :: montant(${p.salaire})}"></span></dd>
+        <dt>Type de contrat</dt><dd th:text="${p.typeContrat.libelle}"></dd>
+        <dt>Date de commencement</dt><dd th:text="${#temporals.format(p.dateCommencement, 'dd/MM/yyyy')}"></dd>
+        <dt>Date de fin</dt><dd th:text="${p.dateFin != null ? #temporals.format(p.dateFin, 'dd/MM/yyyy') : '—'}"></dd>
+        <dt>Réponse attendue avant le</dt>
+        <dd>
+            <span th:text="${#temporals.format(p.dateLimiteValidation, 'dd/MM/yyyy')}"></span>
+            <span class="statut refuse" th:if="${p.estExpiree() and p.statut.libelle == 'enregistre'}">expirée</span>
+        </dd>
+    </dl>
+</div>
+
+<!-- Réponses successives du candidat -->
+<div class="carte" th:fragment="reponses(liste)">
+    <h2>Réponses du candidat</h2>
+    <p class="doux" th:if="${#lists.isEmpty(liste)}">Pas encore de réponse.</p>
+    <div class="tableau-conteneur" th:unless="${#lists.isEmpty(liste)}">
+        <table>
+            <thead><tr><th>Date</th><th>Salaire</th><th>Contrat</th><th>Début</th><th>Fin</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${liste}">
+                <td th:text="${#temporals.format(r.dateReponse, 'dd/MM/yyyy HH:mm')}"></td>
+                <td>
+                    <span th:if="${r.accepteSalaire}">✔ Oui</span>
+                    <span th:unless="${r.accepteSalaire}">✘ Non
+                        <th:block th:if="${r.salaireSouhaite}">→ <span th:replace="~{fragments/layout :: montant(${r.salaireSouhaite})}"></span></th:block>
+                    </span>
+                </td>
+                <td th:text="${r.accepteTypeContrat ? '✔ Oui' : '✘ Non' + (r.typeContratSouhaite != null ? ' → ' + r.typeContratSouhaite.libelle : '')}"></td>
+                <td th:text="${r.accepteDateCommencement ? '✔ Oui' : '✘ Non' + (r.dateCommencementSouhaite != null ? ' → ' + #temporals.format(r.dateCommencementSouhaite, 'dd/MM/yyyy') : '')}"></td>
+                <td th:text="${r.accepteDateFin == null ? '—' : (r.accepteDateFin ? '✔ Oui' : '✘ Non' + (r.dateFinSouhaite != null ? ' → ' + #temporals.format(r.dateFinSouhaite, 'dd/MM/yyyy') : ''))}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Discussion RH <-> candidat -->
+<div class="carte" id="discussion" th:fragment="discussion(messages, action, moi)">
+    <h2>Discussion avec la RH</h2>
+    <div class="discussion">
+        <p class="doux" th:if="${#lists.isEmpty(messages)}">Aucun message.</p>
+        <div class="bulle" th:each="m : ${messages}" th:classappend="${m.auteur == moi} ? 'moi'">
+            <span class="date" th:text="(${m.auteur == 'RH'} ? 'RH' + (${m.employe != null} ? ' · ' + ${m.employe.nomComplet} : '') : 'Candidat') + ' — ' + ${#temporals.format(m.dateEnvoi, 'dd/MM/yyyy HH:mm')}"></span>
+            <span class="texte-long" th:text="${m.contenu}"></span>
+        </div>
+    </div>
+    <form th:action="${action}" method="post">
+        <div class="champ"><textarea name="contenu" rows="3" placeholder="Votre message…" required></textarea></div>
+        <button type="submit" class="bouton secondaire">Envoyer</button>
+    </form>
+</div>
+
+</body>
+</html>

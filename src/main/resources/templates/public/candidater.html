@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Postuler')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/offres/{id}(id=${offre.id})}">← Retour à l'offre</a></p>
+
+        <div class="entete-page">
+            <div>
+                <h1>Postuler</h1>
+                <p th:text="${offre.intitule} + ' · ' + ${offre.departement.libelle}"></p>
+            </div>
+        </div>
+
+        <form class="carte" th:action="@{/offres/{id}/candidater(id=${offre.id})}" th:object="${form}" method="post" novalidate>
+            <div class="message erreur" th:if="${#fields.hasErrors('*')}">Merci de corriger les champs en rouge.</div>
+
+            <fieldset>
+                <legend>1. Vous êtes</legend>
+                <div class="choix">
+                    <label th:each="t : ${typesCandidature}">
+                        <input type="radio" th:field="*{idTypeCandidature}" th:value="${t.id}" th:attr="data-code=${t.libelle}">
+                        <span th:text="${t.libelle == 'employe' ? 'Employé de l’entreprise' : (t.libelle == 'externe' ? 'Candidat externe' : 'Ancienne relation (ancien employé, stagiaire…)')}"></span>
+                    </label>
+                </div>
+                <div class="erreur-champ" th:errors="*{idTypeCandidature}"></div>
+                <div class="champ" id="bloc-matricule" style="margin-top:1rem">
+                    <label for="matricule">Matricule</label>
+                    <input type="text" th:field="*{matricule}" placeholder="ex. INF004">
+                    <div class="aide">Obligatoire pour un employé, facultatif pour une ancienne relation.</div>
+                </div>
+            </fieldset>
+
+            <fieldset th:if="${utilisateur == null or !utilisateur.estCandidat()}">
+                <legend>2. Votre compte candidat</legend>
+                <p class="doux">Ce compte vous permettra de suivre votre candidature, les messages, propositions et contrats de l'entreprise.
+                    Vous avez déjà un compte ? Saisissez simplement son e-mail et son mot de passe, ou <a th:href="@{/connexion}">connectez-vous</a>.</p>
+                <div class="ligne">
+                    <div class="champ"><label for="nom">Nom</label><input type="text" th:field="*{nom}"></div>
+                    <div class="champ"><label for="prenom">Prénom</label><input type="text" th:field="*{prenom}"></div>
+                </div>
+                <div class="ligne">
+                    <div class="champ"><label for="email">E-mail</label><input type="email" th:field="*{email}" required></div>
+                    <div class="champ"><label for="telephone">Téléphone</label><input type="tel" th:field="*{telephone}"></div>
+                </div>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="dateNaissance">Date de naissance</label>
+                        <input type="date" th:field="*{dateNaissance}">
+                        <div class="erreur-champ" th:errors="*{dateNaissance}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="sexe">Sexe</label>
+                        <select th:field="*{sexe}">
+                            <option value="">—</option>
+                            <option value="Homme">Homme</option>
+                            <option value="Femme">Femme</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="champ"><label for="adresse">Adresse</label><input type="text" th:field="*{adresse}"></div>
+                <div class="ligne">
+                    <div class="champ"><label for="motDePasse">Mot de passe</label><input type="password" th:field="*{motDePasse}" required></div>
+                    <div class="champ"><label for="confirmation">Confirmation</label><input type="password" th:field="*{confirmation}"></div>
+                </div>
+            </fieldset>
+            <div class="message info" th:if="${utilisateur != null and utilisateur.estCandidat()}"
+                 th:text="'Candidature enregistrée sur votre compte ' + ${utilisateur.identifiant} + '.'"></div>
+
+            <fieldset>
+                <legend th:text="${utilisateur != null and utilisateur.estCandidat()} ? '2. Votre candidature' : '3. Votre candidature'">Votre candidature</legend>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="diplome">Diplôme le plus élevé</label>
+                        <input type="text" th:field="*{diplome}">
+                        <div class="erreur-champ" th:errors="*{diplome}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="anneesExperience">Années d'expérience</label>
+                        <input type="number" min="0" th:field="*{anneesExperience}">
+                        <div class="erreur-champ" th:errors="*{anneesExperience}"></div>
+                    </div>
+                </div>
+                <div class="champ">
+                    <label for="lettreMotivation">Lettre de motivation</label>
+                    <textarea th:field="*{lettreMotivation}" rows="6"></textarea>
+                    <div class="erreur-champ" th:errors="*{lettreMotivation}"></div>
+                </div>
+            </fieldset>
+
+            <button type="submit" class="bouton">Valider ma candidature</button>
+        </form>
+    </main>
+</div>
+<script>
+    // Le matricule n'est utile que pour « employe » et « ancienne relation »
+    document.addEventListener("DOMContentLoaded", () => {
+        const bloc = document.getElementById("bloc-matricule");
+        const maj = () => {
+            const choisi = document.querySelector("input[name=idTypeCandidature]:checked");
+            bloc.classList.toggle("cache", !choisi || choisi.dataset.code === "externe");
+        };
+        document.querySelectorAll("input[name=idTypeCandidature]").forEach(r => r.addEventListener("change", maj));
+        maj();
+    });
+</script>
+</body>
+</html>

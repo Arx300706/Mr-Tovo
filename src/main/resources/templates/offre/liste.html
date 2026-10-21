@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${titre})}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="${titre}">Offres</h1>
+                <p th:text="${#lists.size(offres)} + ' offre(s)'"></p>
+            </div>
+            <a class="bouton secondaire" th:if="${urlFiltre}" th:href="@{/rh/offres/besoins-valides}">Créer une offre depuis un besoin validé
+                <span th:replace="~{fragments/layout :: pastille(${badges['rhBesoinsValides']})}"></span></a>
+        </div>
+
+        <div class="filtres" th:if="${statuts}">
+            <a th:href="@{${urlFiltre}}" th:classappend="${statut == null or statut == ''} ? 'actif'">toutes</a>
+            <a th:each="s : ${statuts}" th:href="@{${urlFiltre}(statut=${s.libelle})}" th:text="${s.libelle}"
+               th:classappend="${statut == s.libelle} ? 'actif'"></a>
+        </div>
+
+        <div class="carte tableau-conteneur">
+            <table>
+                <thead>
+                <tr><th>Intitulé</th><th>Département / service</th><th class="nombre">Postes</th><th>Date limite</th><th>Statut</th><th>Modifiée le</th><th></th></tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(offres)}"><td colspan="7" class="vide">Aucune offre.</td></tr>
+                <tr th:each="o : ${offres}">
+                    <td><a th:href="@{/rh/offres/{id}(id=${o.id})}" th:text="${o.intitule}"></a></td>
+                    <td th:text="${o.departement.libelle} + ' · ' + ${o.service.libelle}"></td>
+                    <td class="nombre" th:text="${o.besoin.nombre}"></td>
+                    <td th:text="${o.dateFin != null ? #temporals.format(o.dateFin, 'dd/MM/yyyy') : '—'}"></td>
+                    <td><span th:replace="~{fragments/layout :: statut(${o.statut.libelle})}"></span></td>
+                    <td th:text="${#temporals.format(o.dateModification, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td class="actions">
+                        <form th:if="${o.statut.libelle == 'enregistre' and utilisateur.aRole('DIRECTEUR')}"
+                              th:action="@{/directeur/offres/{id}/valider(id=${o.id})}" method="post">
+                            <button type="submit" class="bouton petit succes">Valider</button>
+                        </form>
+                        <form th:if="${o.statut.libelle == 'valide' and utilisateur.aRole('RH')}"
+                              th:action="@{/rh/offres/{id}/publier(id=${o.id})}" method="post">
+                            <button type="submit" class="bouton petit">Publier</button>
+                        </form>
+                        <a class="bouton petit secondaire" th:href="@{/rh/offres/{id}(id=${o.id})}">Ouvrir</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

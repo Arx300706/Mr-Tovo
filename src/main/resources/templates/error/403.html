@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accès refusé — Mr Tovo RH</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main class="contenu connexion">
+    <div class="carte">
+        <h1>403 — Accès refusé</h1>
+        <p class="doux">Vous n'avez pas les droits pour accéder à cette page.</p>
+        <div class="actions">
+            <a class="bouton" th:href="@{/}">Accueil</a>
+            <a class="bouton secondaire" th:href="@{/tableau-de-bord}">Mon espace</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

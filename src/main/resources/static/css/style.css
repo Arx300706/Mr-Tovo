@@ -1,0 +1,209 @@
+/* =================================================================
+   Mr Tovo — feuille de style unique
+   ================================================================= */
+:root {
+    --fond: #f4f6f9;
+    --surface: #ffffff;
+    --bordure: #e2e6ec;
+    --texte: #1f2933;
+    --texte-doux: #616e7c;
+    --primaire: #1d4ed8;
+    --primaire-fonce: #1e3a8a;
+    --menu-fond: #111827;
+    --menu-texte: #cbd5e1;
+    --menu-actif: #1f2937;
+    --succes: #15803d;
+    --succes-fond: #dcfce7;
+    --erreur: #b91c1c;
+    --erreur-fond: #fee2e2;
+    --alerte: #b45309;
+    --alerte-fond: #fef3c7;
+    --info: #1d4ed8;
+    --info-fond: #dbeafe;
+    --neutre-fond: #e5e7eb;
+    --rayon: 8px;
+    --ombre: 0 1px 3px rgba(15, 23, 42, .08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    color: var(--texte);
+    background: var(--fond);
+    line-height: 1.5;
+}
+
+a { color: var(--primaire); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.2rem; margin: 0 0 .75rem; }
+h3 { font-size: 1rem; margin: 1rem 0 .5rem; }
+
+/* ---------- Mise en page ---------- */
+.app { display: flex; min-height: 100vh; }
+
+.menu {
+    width: 250px;
+    flex-shrink: 0;
+    background: var(--menu-fond);
+    color: var(--menu-texte);
+    padding: 1rem .75rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+.menu .logo { display: block; color: #fff; font-weight: 700; font-size: 1.25rem; padding: .25rem .5rem 1rem; }
+.menu .logo small { display: block; font-weight: 400; font-size: .75rem; color: var(--menu-texte); }
+.menu .groupe { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: #64748b; margin: 1rem .5rem .35rem; }
+.menu a, .menu button.lien-menu {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: .45rem .6rem; border-radius: 6px;
+    color: var(--menu-texte); font: inherit; text-align: left;
+    background: none; border: 0; cursor: pointer;
+}
+.menu a:hover, .menu button.lien-menu:hover { background: var(--menu-actif); color: #fff; text-decoration: none; }
+.menu a.actif { background: var(--primaire); color: #fff; }
+.menu .utilisateur { padding: .6rem; margin-top: 1rem; border-top: 1px solid #1f2937; font-size: .85rem; }
+.menu .utilisateur strong { color: #fff; display: block; }
+
+.pastille {
+    display: inline-block; min-width: 1.4rem; padding: 0 .4rem;
+    border-radius: 999px; background: #ef4444; color: #fff;
+    font-size: .72rem; font-weight: 700; text-align: center; line-height: 1.4rem;
+}
+
+.contenu { flex: 1; padding: 1.75rem 2rem; max-width: 1200px; min-width: 0; }
+.entete-page { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.entete-page p { margin: 0; color: var(--texte-doux); }
+
+/* ---------- Composants ---------- */
+.carte {
+    background: var(--surface); border: 1px solid var(--bordure);
+    border-radius: var(--rayon); box-shadow: var(--ombre);
+    padding: 1.25rem; margin-bottom: 1.25rem;
+}
+.grille { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grille-2 { display: grid; gap: 1.25rem; grid-template-columns: 2fr 1fr; }
+
+.message { padding: .75rem 1rem; border-radius: var(--rayon); margin-bottom: 1rem; }
+.message.succes { background: var(--succes-fond); color: var(--succes); }
+.message.erreur { background: var(--erreur-fond); color: var(--erreur); }
+.message.info { background: var(--info-fond); color: var(--info); }
+.message.alerte { background: var(--alerte-fond); color: var(--alerte); }
+
+.bouton {
+    display: inline-block; padding: .5rem 1rem; border-radius: 6px;
+    border: 1px solid var(--primaire); background: var(--primaire); color: #fff;
+    font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.bouton:hover { background: var(--primaire-fonce); text-decoration: none; }
+.bouton.secondaire { background: #fff; color: var(--primaire); }
+.bouton.danger { background: var(--erreur); border-color: var(--erreur); }
+.bouton.succes { background: var(--succes); border-color: var(--succes); }
+.bouton.petit { padding: .25rem .6rem; font-size: .85rem; }
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: flex-start; }
+.actions form { margin: 0; }
+
+/* ---------- Tableaux ---------- */
+.tableau-conteneur { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: .6rem .7rem; text-align: left; border-bottom: 1px solid var(--bordure); vertical-align: top; }
+th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--texte-doux); background: #f8fafc; }
+tr:hover td { background: #f9fbff; }
+td.nombre, th.nombre { text-align: right; white-space: nowrap; }
+tr.mise-en-avant td { background: #eff6ff; }
+.vide { color: var(--texte-doux); text-align: center; padding: 1.5rem; }
+
+/* ---------- Filtres ---------- */
+.filtres { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.filtres a { padding: .3rem .8rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--bordure); color: var(--texte); font-size: .85rem; }
+.filtres a.actif { background: var(--primaire); border-color: var(--primaire); color: #fff; }
+
+/* ---------- Statuts ---------- */
+.statut {
+    display: inline-block; padding: .1rem .6rem; border-radius: 999px;
+    font-size: .78rem; font-weight: 600; white-space: nowrap;
+    background: var(--neutre-fond); color: var(--texte);
+}
+.statut.cree, .statut.enregistre { background: var(--info-fond); color: var(--info); }
+.statut.envoie-finance, .statut.selectionne, .statut.teste-techniquement, .statut.entretien-ok,
+.statut.en-attente, .statut.signe { background: var(--alerte-fond); color: var(--alerte); }
+.statut.valide-finance, .statut.valide, .statut.publie, .statut.succes { background: var(--succes-fond); color: var(--succes); }
+.statut.refuse-finance, .statut.rejete, .statut.refuse, .statut.annule, .statut.rompu { background: var(--erreur-fond); color: var(--erreur); }
+.statut.fin { background: var(--neutre-fond); color: var(--texte-doux); }
+
+/* ---------- Fiches (détail) ---------- */
+dl.fiche { display: grid; grid-template-columns: 200px 1fr; gap: .45rem 1rem; margin: 0; }
+dl.fiche dt { color: var(--texte-doux); }
+dl.fiche dd { margin: 0; font-weight: 500; }
+.texte-long { white-space: pre-line; }
+.doux { color: var(--texte-doux); }
+.montant { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chiffre { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.chiffre.ok { color: var(--succes); }
+.chiffre.ko { color: var(--erreur); }
+
+/* ---------- Formulaires ---------- */
+.champ { margin-bottom: 1rem; }
+.champ label, .etiquette { display: block; font-weight: 600; margin-bottom: .3rem; }
+.champ .aide { font-size: .82rem; color: var(--texte-doux); margin-top: .2rem; }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date],
+input[type=datetime-local], input[type=tel], select, textarea {
+    width: 100%; padding: .5rem .65rem; font: inherit; color: inherit;
+    border: 1px solid #cbd2d9; border-radius: 6px; background: #fff;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid #93c5fd; border-color: var(--primaire); }
+textarea { min-height: 100px; resize: vertical; }
+.ligne { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.erreur-champ { color: var(--erreur); font-size: .82rem; margin-top: .2rem; }
+fieldset { border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 1rem; margin: 0 0 1rem; }
+legend { font-weight: 700; padding: 0 .4rem; }
+.choix { display: flex; gap: 1rem; flex-wrap: wrap; }
+.choix label { font-weight: 400; display: flex; align-items: center; gap: .35rem; cursor: pointer; }
+.cache { display: none; }
+
+/* Négociation : une ligne par champ de la proposition */
+.negociation { display: grid; grid-template-columns: 1fr 1fr 170px 1fr; gap: .75rem; align-items: center;
+    padding: .75rem 0; border-bottom: 1px solid var(--bordure); }
+.negociation:last-of-type { border-bottom: 0; }
+.negociation .valeur { font-weight: 600; }
+
+/* ---------- Historique / discussion ---------- */
+.historique { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--bordure); }
+.historique li { position: relative; padding: 0 0 .9rem 1rem; }
+.historique li::before { content: ""; position: absolute; left: -6px; top: .4rem; width: 10px; height: 10px; border-radius: 50%; background: var(--primaire); }
+.historique .date { font-size: .8rem; color: var(--texte-doux); }
+
+.discussion { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+.bulle { max-width: 75%; padding: .6rem .8rem; border-radius: 10px; background: var(--neutre-fond); }
+.bulle.moi { align-self: flex-end; background: var(--info-fond); }
+.bulle .date { display: block; font-size: .75rem; color: var(--texte-doux); }
+
+/* ---------- Offres (public) ---------- */
+.offre-carte h2 { margin-bottom: .25rem; }
+.offre-carte .meta { color: var(--texte-doux); font-size: .88rem; margin-bottom: .75rem; }
+.hero { background: linear-gradient(135deg, var(--primaire-fonce), var(--primaire)); color: #fff; border-radius: var(--rayon); padding: 2rem; margin-bottom: 1.5rem; }
+.hero h1 { font-size: 1.9rem; }
+.hero p { margin: .25rem 0 0; opacity: .9; }
+
+.notif { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--bordure); }
+.notif.non-lue { font-weight: 600; }
+.notif.non-lue::before { content: "●"; color: #ef4444; margin-right: .5rem; }
+
+.connexion { max-width: 440px; margin: 3rem auto; }
+.onglets { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.onglets button { flex: 1; padding: .6rem; border: 1px solid var(--bordure); background: #fff; border-radius: 6px; font: inherit; cursor: pointer; }
+.onglets button.actif { background: var(--primaire); color: #fff; border-color: var(--primaire); }
+
+@media (max-width: 900px) {
+    .app { flex-direction: column; }
+    .menu { width: 100%; height: auto; position: static; }
+    .contenu { padding: 1rem; }
+    .grille-2 { grid-template-columns: 1fr; }
+    dl.fiche { grid-template-columns: 1fr; }
+    .negociation { grid-template-columns: 1fr; }
+}

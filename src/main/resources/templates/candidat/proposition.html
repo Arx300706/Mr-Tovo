@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Proposition d’emploi')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/candidat}">← Mon espace</a></p>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="'Proposition : ' + ${proposition.offre.intitule}">Proposition</h1>
+                <p th:text="'Reçue le ' + ${#temporals.format(proposition.dateCreation, 'dd/MM/yyyy')}"></p>
+            </div>
+            <span th:replace="~{fragments/layout :: statut(${proposition.statut.libelle})}"></span>
+        </div>
+
+        <div class="message info" th:if="${proposition.statut.libelle == 'en attente'}">
+            Votre contre-proposition est en cours d'examen par la RH. Vous pouvez échanger avec elle ci-dessous.</div>
+        <div class="message succes" th:if="${proposition.statut.libelle == 'valide'}">
+            Proposition acceptée.
+            <a th:if="${contrat != null}" th:href="@{/candidat/contrats/{id}(id=${contrat.id})}">Voir votre contrat →</a>
+            <span th:if="${contrat == null}">La RH prépare votre contrat.</span>
+        </div>
+
+        <!-- Réponse champ par champ -->
+        <form class="carte" th:if="${proposition.statut.libelle == 'enregistre' and !proposition.estExpiree()}"
+              th:action="@{/candidat/propositions/{id}/reponse(id=${proposition.id})}" th:object="${form}" method="post">
+            <h2>Votre réponse</h2>
+            <p class="doux">Pour chaque point, répondez Oui ou Non. Si vous répondez Non, indiquez ce que vous souhaitez.
+                Tout Oui : la proposition est acceptée. Tout Non : elle est refusée. Sinon, la RH étudie votre contre-proposition.</p>
+
+            <div class="negociation">
+                <span class="etiquette">Salaire mensuel</span>
+                <span class="valeur"><span th:replace="~{fragments/layout :: montant(${proposition.salaire})}"></span></span>
+                <span class="choix">
+                    <label><input type="radio" name="accepteSalaire" value="true" required> Oui</label>
+                    <label><input type="radio" name="accepteSalaire" value="false"> Non</label>
+                </span>
+                <span data-afficher-si="accepteSalaire=false">
+                    <input type="number" name="salaireSouhaite" min="1" step="1000" placeholder="Salaire souhaité (Ar)">
+                </span>
+            </div>
+
+            <div class="negociation">
+                <span class="etiquette">Type de contrat</span>
+                <span class="valeur" th:text="${proposition.typeContrat.libelle}"></span>
+                <span class="choix">
+                    <label><input type="radio" name="accepteTypeContrat" value="true" required> Oui</label>
+                    <label><input type="radio" name="accepteTypeContrat" value="false"> Non</label>
+                </span>
+                <span data-afficher-si="accepteTypeContrat=false">
+                    <select name="idTypeContratSouhaite">
+                        <option value="">Contrat souhaité…</option>
+                        <option th:each="t : ${typesContrat}" th:unless="${t.id == proposition.typeContrat.id}"
+                                th:value="${t.id}" th:text="${t.libelle}"></option>
+                    </select>
+                </span>
+            </div>
+
+            <div class="negociation">
+                <span class="etiquette">Date de commencement</span>
+                <span class="valeur" th:text="${#temporals.format(proposition.dateCommencement, 'dd/MM/yyyy')}"></span>
+                <span class="choix">
+                    <label><input type="radio" name="accepteDateCommencement" value="true" required> Oui</label>
+                    <label><input type="radio" name="accepteDateCommencement" value="false"> Non</label>
+                </span>
+                <span data-afficher-si="accepteDateCommencement=false">
+                    <input type="date" name="dateCommencementSouhaite">
+                </span>
+            </div>
+
+            <div class="negociation" th:if="${proposition.dateFin != null}">
+                <span class="etiquette">Date de fin</span>
+                <span class="valeur" th:text="${#temporals.format(proposition.dateFin, 'dd/MM/yyyy')}"></span>
+                <span class="choix">
+                    <label><input type="radio" name="accepteDateFin" value="true" required> Oui</label>
+                    <label><input type="radio" name="accepteDateFin" value="false"> Non</label>
+                </span>
+                <span data-afficher-si="accepteDateFin=false">
+                    <input type="date" name="dateFinSouhaite">
+                </span>
+            </div>
+
+            <div class="champ" style="margin-top:1rem">
+                <label for="commentaire">Commentaire (facultatif)</label>
+                <textarea id="commentaire" name="commentaire" rows="3"></textarea>
+            </div>
+            <button type="submit" class="bouton">Envoyer ma réponse</button>
+        </form>
+        <div class="message alerte" th:if="${proposition.statut.libelle == 'enregistre' and proposition.estExpiree()}">
+            La date limite de réponse est dépassée. Contactez la RH via la discussion ci-dessous.</div>
+
+        <div class="grille-2">
+            <div>
+                <div th:replace="~{fragments/proposition :: fiche(${proposition})}"></div>
+                <div th:replace="~{fragments/proposition :: reponses(${reponses})}"></div>
+            </div>
+            <div th:replace="~{fragments/proposition :: discussion(${messages}, @{/candidat/propositions/{id}/messages(id=${proposition.id})}, 'CANDIDAT')}"></div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

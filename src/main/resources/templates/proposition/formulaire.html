@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${revision != null} ? 'Réviser la proposition' : 'Nouvelle proposition')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p th:if="${revision == null}"><a th:href="@{/rh/candidatures/{id}(id=${candidature.id})}">← Candidature</a></p>
+        <p th:if="${revision != null}"><a th:href="@{/rh/propositions/{id}(id=${revision.id})}">← Proposition</a></p>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="${revision != null} ? 'Réviser la proposition n°' + ${revision.id} : 'Proposition d’emploi'">Proposition</h1>
+                <p th:text="${candidature.compte.nomComplet} + ' — ' + ${candidature.offre.intitule}"></p>
+            </div>
+        </div>
+
+        <div class="carte" th:with="o=${candidature.offre}, b=${candidature.offre.besoin}">
+            <h2>Offre concernée</h2>
+            <dl class="fiche">
+                <dt>Offre</dt><dd><a th:href="@{/rh/offres/{id}(id=${o.id})}" th:text="${o.intitule}"></a></dd>
+                <dt>Département / service</dt><dd th:text="${o.departement.libelle} + ' · ' + ${o.service.libelle}"></dd>
+                <dt>Poste du besoin</dt><dd th:text="${b.poste != null ? b.poste.libelle + (b.poste.estOccupe ? ' (déjà occupé)' : ' (vacant)') : 'Nouveau poste'}"></dd>
+                <dt>Contrat prévu</dt><dd th:text="${b.typeContrat.libelle}"></dd>
+                <dt>Salaire retenu (RH)</dt><dd><span th:replace="~{fragments/layout :: montant(${b.salaireMensuel})}"></span></dd>
+                <dt>Commencement prévu</dt><dd th:text="${b.dateCommencement != null ? #temporals.format(b.dateCommencement, 'dd/MM/yyyy') : '—'}"></dd>
+                <dt>Candidat</dt><dd th:text="${candidature.compte.nomComplet} + ' (' + ${candidature.typeCandidature.libelle} + ')'"></dd>
+            </dl>
+            <p class="doux" th:if="${revision == null}">Les champs ci-dessous sont pré-remplis à partir de cette offre : ajustez-les si besoin.</p>
+        </div>
+
+        <div class="carte" th:if="${derniereReponse != null}">
+            <h2>Ce que souhaite le candidat</h2>
+            <ul>
+                <li th:unless="${derniereReponse.accepteSalaire}">Salaire : <span th:replace="~{fragments/layout :: montant(${derniereReponse.salaireSouhaite})}"></span></li>
+                <li th:unless="${derniereReponse.accepteTypeContrat}" th:text="'Type de contrat : ' + ${derniereReponse.typeContratSouhaite?.libelle}"></li>
+                <li th:unless="${derniereReponse.accepteDateCommencement}" th:text="'Commencement : ' + ${#temporals.format(derniereReponse.dateCommencementSouhaite, 'dd/MM/yyyy')}"></li>
+                <li th:if="${derniereReponse.accepteDateFin == false}" th:text="'Fin : ' + ${#temporals.format(derniereReponse.dateFinSouhaite, 'dd/MM/yyyy')}"></li>
+                <li th:if="${derniereReponse.commentaire}" th:text="'Commentaire : ' + ${derniereReponse.commentaire}"></li>
+            </ul>
+        </div>
+
+        <form class="carte" th:object="${form}" method="post" novalidate
+              th:action="${revision != null} ? @{/rh/propositions/{id}/reviser(id=${revision.id})} : @{/rh/propositions/nouvelle(candidature=${candidature.id})}">
+            <fieldset>
+                <legend>Poste</legend>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="idPoste">Poste vacant</label>
+                        <select th:field="*{idPoste}">
+                            <option value="">— Créer un nouveau poste —</option>
+                            <option th:if="${revision != null and revision.poste.estOccupe == false and !postesVacants.contains(revision.poste)}"
+                                    th:value="${revision.poste.id}" th:text="${revision.poste.libelle}"></option>
+                            <option th:each="p : ${postesVacants}" th:value="${p.id}" th:text="${p.libelle}"></option>
+                        </select>
+                        <div class="aide" th:text="'Postes vacants du service ' + ${candidature.offre.service.libelle}"></div>
+                    </div>
+                    <div class="champ" data-afficher-si="idPoste=">
+                        <label for="libelleNouveauPoste">Libellé du nouveau poste</label>
+                        <input type="text" th:field="*{libelleNouveauPoste}">
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Conditions</legend>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="salaire">Salaire mensuel (Ar)</label>
+                        <input type="number" min="1" step="1000" th:field="*{salaire}">
+                        <div class="erreur-champ" th:errors="*{salaire}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="idTypeContrat">Type de contrat</label>
+                        <select th:field="*{idTypeContrat}">
+                            <option th:each="t : ${typesContrat}" th:value="${t.id}" th:text="${t.libelle}" th:attr="data-code=${t.libelle}"></option>
+                        </select>
+                        <div class="erreur-champ" th:errors="*{idTypeContrat}"></div>
+                    </div>
+                </div>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="dateCommencement">Date de commencement</label>
+                        <input type="date" th:field="*{dateCommencement}">
+                        <div class="erreur-champ" th:errors="*{dateCommencement}"></div>
+                    </div>
+                    <div class="champ" data-afficher-si="idTypeContrat=CE|CDD">
+                        <label for="dateFin">Date de fin</label>
+                        <input type="date" th:field="*{dateFin}">
+                    </div>
+                    <div class="champ">
+                        <label for="dateLimiteValidation">Réponse attendue avant le</label>
+                        <input type="date" th:field="*{dateLimiteValidation}">
+                        <div class="erreur-champ" th:errors="*{dateLimiteValidation}"></div>
+                    </div>
+                </div>
+            </fieldset>
+            <button type="submit" class="bouton" th:text="${revision != null} ? 'Renvoyer la proposition révisée' : 'Envoyer la proposition au candidat'">Envoyer</button>
+        </form>
+    </main>
+</div>
+</body>
+</html>

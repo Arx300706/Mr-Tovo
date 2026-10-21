@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tableau de bord')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="'Bonjour ' + ${employe.prenom}">Bonjour</h1>
+                <p th:text="${employe.posteActuel != null ? employe.posteActuel.libelle + ' · ' + employe.posteActuel.departement.libelle : 'Sans poste actuel'}"></p>
+            </div>
+        </div>
+
+        <div class="grille">
+            <div class="carte" th:if="${utilisateur.aRole('MANAGER')}">
+                <h2>Manager</h2>
+                <p class="doux">Exprimez les besoins en personnel de votre département et suivez leur avancement.</p>
+                <div class="actions">
+                    <a class="bouton" th:href="@{/manager/besoins/nouveau}">Exprimer un besoin</a>
+                    <a class="bouton secondaire" th:href="@{/manager/besoins}">Mes besoins</a>
+                </div>
+            </div>
+
+            <div class="carte" th:if="${utilisateur.aRole('RH')}">
+                <h2>Ressources humaines</h2>
+                <ul>
+                    <li><a th:href="@{/rh/besoins}">Besoins à analyser</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhBesoinsCrees']})}"></span></li>
+                    <li><a th:href="@{/rh/offres/besoins-valides}">Offres à créer</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhBesoinsValides']})}"></span></li>
+                    <li><a th:href="@{/rh/offres(statut='valide')}">Offres à publier</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhOffresValides']})}"></span></li>
+                    <li><a th:href="@{/rh/candidatures}">Nouvelles candidatures</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhCandidaturesCreees']})}"></span></li>
+                    <li><a th:href="@{/rh/candidatures(statut='selectionne')}">Candidatures en cours d'épreuves</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhCandidaturesEnCours']})}"></span></li>
+                    <li><a th:href="@{/rh/propositions}">Propositions à faire</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhCandidaturesSucces']})}"></span></li>
+                    <li><a th:href="@{/rh/propositions(statut='en attente')}">Contre-propositions</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhPropositionsEnAttente']})}"></span></li>
+                    <li><a th:href="@{/rh/contrats}">Contrats à générer</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhPropositionsValides']})}"></span></li>
+                    <li><a th:href="@{/rh/contrats(statut='signe')}">Contrats à signer (RH)</a> <span th:replace="~{fragments/layout :: pastille(${badges['rhContratsSignes']})}"></span></li>
+                </ul>
+            </div>
+
+            <div class="carte" th:if="${utilisateur.aRole('FINANCE')}">
+                <h2>Finance</h2>
+                <p class="doux">Validez ou refusez les besoins selon le budget annuel.</p>
+                <a class="bouton" th:href="@{/finance/besoins}">Besoins à valider
+                    <span th:replace="~{fragments/layout :: pastille(${badges['financeBesoins']})}"></span></a>
+            </div>
+
+            <div class="carte" th:if="${utilisateur.aRole('DIRECTEUR')}">
+                <h2>Direction</h2>
+                <p class="doux">Validez les offres d'emploi enregistrées par la RH.</p>
+                <a class="bouton" th:href="@{/directeur/offres}">Offres à valider
+                    <span th:replace="~{fragments/layout :: pastille(${badges['directeurOffres']})}"></span></a>
+            </div>
+
+            <div class="carte">
+                <h2>Mon dossier</h2>
+                <dl class="fiche">
+                    <dt>Matricule</dt><dd th:text="${employe.matricule}"></dd>
+                    <dt>Embauché le</dt><dd th:text="${employe.dateEmbauche != null ? #temporals.format(employe.dateEmbauche, 'dd/MM/yyyy') : '—'}"></dd>
+                    <dt>Contrat actuel</dt><dd th:text="${employe.contratActuel != null ? employe.contratActuel.typeContrat.libelle : '—'}"></dd>
+                </dl>
+                <h3 th:unless="${#lists.isEmpty(historique)}">Parcours</h3>
+                <ul class="historique" th:unless="${#lists.isEmpty(historique)}">
+                    <li th:each="h : ${historique}">
+                        <span class="date" th:text="${#temporals.format(h.date, 'dd/MM/yyyy')}"></span><br>
+                        <span th:text="${h.poste.libelle} + ' (' + ${h.contrat.typeContrat.libelle} + ')'"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Candidatures')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1>Candidatures</h1>
+                <p th:text="${#lists.size(candidatures)} + ' candidature(s)'"></p>
+            </div>
+        </div>
+
+        <div class="filtres">
+            <a th:each="s : ${statuts}" th:href="@{/rh/candidatures(statut=${s.libelle})}" th:text="${s.libelle}"
+               th:classappend="${statut == s.libelle} ? 'actif'"></a>
+            <a th:href="@{/rh/candidatures(statut='')}" th:classappend="${statut == ''} ? 'actif'">toutes</a>
+        </div>
+
+        <div class="carte tableau-conteneur">
+            <table>
+                <thead>
+                <tr><th>Candidat</th><th>Offre</th><th>Type</th><th>Expérience</th><th>Déposée le</th><th>Test / entretien</th><th>Statut</th><th></th></tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(candidatures)}"><td colspan="8" class="vide">Aucune candidature.</td></tr>
+                <tr th:each="c : ${candidatures}">
+                    <td th:text="${c.compte.nomComplet}"></td>
+                    <td th:text="${c.offre.intitule}"></td>
+                    <td th:text="${c.typeCandidature.libelle}"></td>
+                    <td th:text="${c.anneesExperience} + ' an(s)'"></td>
+                    <td th:text="${#temporals.format(c.dateCandidature, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${c.dateTestTechnique != null ? #temporals.format(c.dateTestTechnique, 'dd/MM HH:mm') + ' / ' + #temporals.format(c.dateEntretien, 'dd/MM HH:mm') : '—'}"></td>
+                    <td><span th:replace="~{fragments/layout :: statut(${c.statut.libelle})}"></span></td>
+                    <td><a class="bouton petit secondaire" th:href="@{/rh/candidatures/{id}(id=${c.id})}">Traiter</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>
