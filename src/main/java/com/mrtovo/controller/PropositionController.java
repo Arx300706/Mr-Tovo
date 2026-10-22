@@ -59,7 +59,8 @@ public class PropositionController {
             return "redirect:/rh/propositions/" + p.getId();
         } catch (RegleMetierException e) {
             model.addAttribute("erreur", e.getMessage());
-            return afficherFormulaire(c, form, null, model);
+            // La transaction annulée a vidé le contexte de persistance : la candidature est rechargée
+            return afficherFormulaire(candidatureService.trouver(candidature), form, null, model);
         }
     }
 
@@ -92,7 +93,8 @@ public class PropositionController {
             propositionService.reviser(id, form, u);
         } catch (RegleMetierException e) {
             model.addAttribute("erreur", e.getMessage());
-            return afficherFormulaire(p.getCandidature(), form, p, model);
+            Proposition actuelle = propositionService.trouver(id);
+            return afficherFormulaire(actuelle.getCandidature(), form, actuelle, model);
         }
         redirect.addFlashAttribute("succes", "Proposition révisée et renvoyée au candidat.");
         return "redirect:/rh/propositions/" + id;

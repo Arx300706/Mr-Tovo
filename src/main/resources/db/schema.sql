@@ -203,11 +203,23 @@ CREATE TABLE candidature (
     diplome               VARCHAR(150),
     annees_experience     INT,
     lettre_motivation     TEXT,
+    experience_professionnelle TEXT,              -- parcours professionnel détaillé (facultatif)
     date_test_technique   TIMESTAMP NULL,
     date_entretien        TIMESTAMP NULL,
     commentaire_rh        TEXT,
     date_modification     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (id_compte, id_offre)                         -- une seule candidature par offre et par compte
+);
+
+-- CV déposés avec une candidature (un enregistrement par dépôt)
+CREATE TABLE cv (
+    id_cv           SERIAL PRIMARY KEY,
+    id_candidature  INT          NOT NULL REFERENCES candidature (id_candidature),
+    nom_fichier     VARCHAR(255) NOT NULL,
+    fichier         BYTEA        NOT NULL,                      -- PDF
+    date_depot      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_employe      INT NULL REFERENCES employe_compte (id_employe), -- employé RH qui a traité le CV
+    date_traitement TIMESTAMP NULL
 );
 
 -- -----------------------------------------------------------------

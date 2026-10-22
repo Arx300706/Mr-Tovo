@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('CV déposés')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1>CV déposés</h1>
+                <p>Tous les CV reçus avec une candidature, et l'employé RH qui les a traités.</p>
+            </div>
+        </div>
+
+        <div class="carte">
+            <p class="doux" th:if="${#lists.isEmpty(cvs)}">Aucun CV déposé pour le moment.</p>
+            <table th:unless="${#lists.isEmpty(cvs)}">
+                <thead>
+                <tr>
+                    <th>Date de dépôt</th>
+                    <th>Candidat</th>
+                    <th>Offre</th>
+                    <th>Candidature</th>
+                    <th>Traité par</th>
+                    <th>Date de traitement</th>
+                    <th>Fichier</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="cv : ${cvs}">
+                    <td th:text="${#temporals.format(cv.dateDepot, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td th:text="${cv.candidature.compte.nomComplet}"></td>
+                    <td th:text="${cv.candidature.offre.intitule}"></td>
+                    <td><a th:href="@{/rh/candidatures/{id}(id=${cv.candidature.id})}" th:text="'n°' + ${cv.candidature.id}"></a></td>
+                    <td th:text="${cv.employe != null ? cv.employe.nomComplet : '—'}"></td>
+                    <td th:text="${cv.dateTraitement != null ? #temporals.format(cv.dateTraitement, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                    <td><a th:href="@{/rh/candidatures/{id}/cv(id=${cv.candidature.id})}" target="_blank" th:text="${cv.nomFichier}"></a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <form class="carte" th:action="@{/offres/{id}/candidater(id=${offre.id})}" th:object="${form}" method="post" novalidate>
+        <form class="carte" th:action="@{/offres/{id}/candidater(id=${offre.id})}" th:object="${form}" method="post" enctype="multipart/form-data" novalidate>
             <div class="message erreur" th:if="${#fields.hasErrors('*')}">Merci de corriger les champs en rouge.</div>
 
             <fieldset>
@@ -85,9 +85,20 @@
                     </div>
                 </div>
                 <div class="champ">
+                    <label for="experienceProfessionnelle">Expérience professionnelle</label>
+                    <textarea th:field="*{experienceProfessionnelle}" rows="4"
+                              placeholder="Employeurs, postes occupés, missions principales, périodes"></textarea>
+                </div>
+                <div class="champ">
                     <label for="lettreMotivation">Lettre de motivation</label>
                     <textarea th:field="*{lettreMotivation}" rows="6"></textarea>
                     <div class="erreur-champ" th:errors="*{lettreMotivation}"></div>
+                </div>
+                <div class="champ">
+                    <label for="cv">CV (PDF)</label>
+                    <input type="file" id="cv" name="cv" accept="application/pdf,.pdf">
+                    <div class="aide">Facultatif. Fichier PDF de 5 Mo maximum.</div>
+                    <div class="erreur-champ" th:errors="*{cv}"></div>
                 </div>
             </fieldset>
 

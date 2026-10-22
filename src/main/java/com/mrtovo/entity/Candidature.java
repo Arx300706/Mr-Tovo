@@ -63,6 +63,9 @@ public class Candidature {
     @Column(columnDefinition = "text")
     private String lettreMotivation;
 
+    @Column(columnDefinition = "text")
+    private String experienceProfessionnelle;
+
     private LocalDateTime dateTestTechnique;
 
     private LocalDateTime dateEntretien;

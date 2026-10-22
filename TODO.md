@@ -133,8 +133,8 @@ besoin «cree» → «envoie Finance» → «valide Finance» → offre «enregi
 - [ ] Clôture automatique quotidienne (`@Scheduled`) des offres dont la date limite est passée (aujourd'hui elles disparaissent de l'accueil mais restent `publie`)
 
 ### Priorité 2
-- [ ] Dépôt du CV (fichier PDF) avec la candidature
-- [ ] Contrat imprimable / export PDF
+- [x] Dépôt du CV (fichier PDF, 5 Mo max) avec la candidature ; expérience professionnelle en texte libre
+- [x] Contrat au format PDF (RH et candidat)
 - [ ] Gestion des comptes : changement de mot de passe, mot de passe oublié
 - [ ] Recherche et pagination dans les listes RH
 - [ ] Tests d'intégration (MockMvc + base PostgreSQL de test) sur chaque étape du flux

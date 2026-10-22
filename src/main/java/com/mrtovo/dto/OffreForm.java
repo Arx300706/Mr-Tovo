@@ -14,7 +14,7 @@ import java.time.LocalDate;
 public class OffreForm {
 
     @NotBlank(message = "L'intitulé est obligatoire")
-    @Size(max = 150)
+    @Size(max = 150, message = "Ne doit pas dépasser 150 caractères")
     private String intitule;
 
     @NotBlank(message = "La description est obligatoire")

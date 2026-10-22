@@ -24,7 +24,7 @@ public class BesoinForm {
     private Integer idPoste;
 
     @NotBlank(message = "L'intitulé est obligatoire")
-    @Size(max = 150)
+    @Size(max = 150, message = "Ne doit pas dépasser 150 caractères")
     private String intitule;
 
     @NotNull(message = "Le nombre est obligatoire")

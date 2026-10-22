@@ -35,6 +35,7 @@
                     <dt>Signature RH</dt><dd th:text="${contrat.dateSignatureRh != null ? #temporals.format(contrat.dateSignatureRh, 'dd/MM/yyyy HH:mm') : '—'}"></dd>
                 </dl>
                 <div class="actions" style="margin-top:1rem">
+                    <a class="bouton" th:href="@{/rh/contrats/{id}/pdf(id=${contrat.id})}" target="_blank">Télécharger le contrat (PDF)</a>
                     <form th:if="${s == 'signe'}" th:action="@{/rh/contrats/{id}/valider(id=${contrat.id})}" method="post">
                         <button type="submit" class="bouton succes">Signer et valider l'embauche</button>
                     </form>

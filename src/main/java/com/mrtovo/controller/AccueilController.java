@@ -76,7 +76,8 @@ public class AccueilController {
             c = candidatureService.postuler(id, form, u);
         } catch (RegleMetierException e) {
             model.addAttribute("erreur", e.getMessage());
-            return afficherFormulaire(offre, form, model);
+            // La transaction annulée a vidé le contexte de persistance : l'offre est rechargée
+            return afficherFormulaire(offrePubliee(id), form, model);
         }
         if (u == null || !u.estCandidat()) {
             connecterCandidat(c, request, response);

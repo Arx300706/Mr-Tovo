@@ -194,6 +194,8 @@ public class PropositionService {
         if (Boolean.FALSE.equals(r.getAccepteDateFin())) {
             p.setDateFin(r.getDateFinSouhaite());
         }
+        // Le candidat peut avoir changé le type de contrat sans fournir de date de fin : la RH doit alors réviser
+        verifierDates(p.getTypeContrat(), p.getDateCommencement(), p.getDateFin(), p.getDateLimiteValidation());
         changerStatut(p, StatutProposition.VALIDE, u, "Contre-proposition du candidat acceptée par la RH");
         notificationService.notifierCompte(p.getCandidature().getCompte(),
                 "La RH a accepté votre contre-proposition pour « " + p.getOffre().getIntitule() + " ». Le contrat va être préparé.",
@@ -302,19 +304,25 @@ public class PropositionService {
 
     // ----------------------------------------------------------------
 
+    /**
+     * Règles de dates d'une proposition : un CE ou un CDD a une date de fin après le commencement
+     * (un CDI n'en a pas) ; la réponse du candidat est attendue au plus tard le jour du commencement.
+     */
+    static void verifierDates(TypeContrat type, LocalDate commencement, LocalDate fin, LocalDate limite) {
+        if (type.aUneDateFin() && (fin == null || !fin.isAfter(commencement))) {
+            throw new RegleMetierException("Pour un " + type.getLibelle() + ", la date de fin doit être après la date de commencement");
+        }
+        if (limite.isAfter(commencement)) {
+            throw new RegleMetierException("La date limite de réponse doit précéder la date de commencement");
+        }
+    }
+
     private void appliquer(Proposition p, PropositionForm f, boolean creation) {
         TypeContrat type = references.parId(TypeContrat.class, f.getIdTypeContrat());
         if (type == null) {
             throw new RegleMetierException("Type de contrat invalide");
         }
-        if (type.aUneDateFin()) {
-            if (f.getDateFin() == null || !f.getDateFin().isAfter(f.getDateCommencement())) {
-                throw new RegleMetierException("Pour un " + type.getLibelle() + ", la date de fin doit être après la date de commencement");
-            }
-        }
-        if (f.getDateLimiteValidation().isAfter(f.getDateCommencement())) {
-            throw new RegleMetierException("La date limite de réponse doit précéder la date de commencement");
-        }
+        verifierDates(type, f.getDateCommencement(), f.getDateFin(), f.getDateLimiteValidation());
         p.setPoste(posteChoisi(p, f, creation));
         p.setSalaire(f.getSalaire());
         p.setTypeContrat(type);

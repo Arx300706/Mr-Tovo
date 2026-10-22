@@ -5,11 +5,13 @@ import com.mrtovo.entity.Employe;
 import com.mrtovo.entity.HistoriqueStatut;
 import com.mrtovo.entity.reference.StatutContrat;
 import com.mrtovo.security.UtilisateurConnecte;
+import com.mrtovo.service.ContratPdfService;
 import com.mrtovo.service.ContratService;
 import com.mrtovo.service.PropositionService;
 import com.mrtovo.service.ReferenceService;
 import com.mrtovo.service.TraceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,6 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class ContratController {
 
     private final ContratService contratService;
+    private final ContratPdfService contratPdfService;
     private final PropositionService propositionService;
     private final TraceService traceService;
     private final ReferenceService references;
@@ -49,6 +52,12 @@ public class ContratController {
         model.addAttribute("contrat", contratService.trouver(id));
         model.addAttribute("historique", traceService.historique(HistoriqueStatut.CONTRAT, id));
         return "contrat/detail";
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> pdf(@PathVariable Integer id) {
+        Contrat c = contratService.trouver(id);
+        return ReponsePdf.inline(contratPdfService.generer(c), "contrat-" + c.getId() + ".pdf");
     }
 
     @PostMapping("/{id}/valider")

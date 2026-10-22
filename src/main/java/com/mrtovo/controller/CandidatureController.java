@@ -12,6 +12,7 @@ import com.mrtovo.service.ReferenceService;
 import com.mrtovo.service.TraceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -45,6 +46,11 @@ public class CandidatureController {
         form.setDateTestTechnique(c.getDateTestTechnique());
         form.setDateEntretien(c.getDateEntretien());
         return afficherDetail(c, form, model);
+    }
+
+    @GetMapping("/{id}/cv")
+    public ResponseEntity<byte[]> cv(@PathVariable Integer id) {
+        return ReponsePdf.cv(candidatureService.cvDe(candidatureService.trouver(id)));
     }
 
     @PostMapping("/{id}/planifier")
@@ -96,6 +102,7 @@ public class CandidatureController {
 
     private String afficherDetail(Candidature c, PlanificationForm form, Model model) {
         model.addAttribute("candidature", c);
+        model.addAttribute("cv", candidatureService.cvDe(c).orElse(null));
         model.addAttribute("planification", form);
         model.addAttribute("propositions", propositionService.listerPourCandidature(c.getId()));
         model.addAttribute("historique", traceService.historique(HistoriqueStatut.CANDIDATURE, c.getId()));

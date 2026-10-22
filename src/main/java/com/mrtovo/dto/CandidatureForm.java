@@ -3,6 +3,7 @@ package com.mrtovo.dto;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 
@@ -36,7 +37,7 @@ public class CandidatureForm {
 
     // --- Candidature ---
     @NotBlank(message = "Le diplôme est obligatoire")
-    @Size(max = 150)
+    @Size(max = 150, message = "Ne doit pas dépasser 150 caractères")
     private String diplome;
 
     @NotNull(message = "Indiquez vos années d'expérience")
@@ -45,4 +46,10 @@ public class CandidatureForm {
 
     @NotBlank(message = "La lettre de motivation est obligatoire")
     private String lettreMotivation;
+
+    /** Parcours professionnel détaillé : employeurs, postes, missions (facultatif). */
+    private String experienceProfessionnelle;
+
+    /** CV au format PDF (facultatif). */
+    private MultipartFile cv;
 }

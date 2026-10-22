@@ -8,6 +8,7 @@ import com.mrtovo.entity.reference.TypeCandidature;
 import com.mrtovo.exception.RegleMetierException;
 import com.mrtovo.exception.RessourceIntrouvableException;
 import com.mrtovo.repository.CandidatureRepository;
+import com.mrtovo.repository.CvRepository;
 import com.mrtovo.repository.CompteRepository;
 import com.mrtovo.repository.EmployeRepository;
 import com.mrtovo.security.UtilisateurConnecte;
@@ -15,10 +16,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -36,7 +43,11 @@ public class CandidatureService {
 
     private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm");
 
+    private static final long TAILLE_MAX_CV = 5L * 1024 * 1024;
+    private static final byte[] ENTETE_PDF = "%PDF-".getBytes(StandardCharsets.US_ASCII);
+
     private final CandidatureRepository candidatureRepository;
+    private final CvRepository cvRepository;
     private final CompteRepository compteRepository;
     private final EmployeRepository employeRepository;
     private final OffreService offreService;
@@ -93,6 +104,8 @@ public class CandidatureService {
         if (type == null) {
             throw new RegleMetierException("Type de candidature invalide");
         }
+        boolean avecCv = f.getCv() != null && !f.getCv().isEmpty();
+        byte[] contenuCv = avecCv ? lireCvPdf(f.getCv()) : null;
 
         Compte compte = (u != null && u.estCandidat())
                 ? compteRepository.findById(u.getId()).orElseThrow()
@@ -111,13 +124,37 @@ public class CandidatureService {
         c.setDiplome(f.getDiplome());
         c.setAnneesExperience(f.getAnneesExperience());
         c.setLettreMotivation(f.getLettreMotivation());
+        c.setExperienceProfessionnelle(f.getExperienceProfessionnelle());
         c.setStatut(references.parLibelle(StatutCandidature.class, StatutCandidature.CREE));
         candidatureRepository.save(c);
+        if (avecCv) {
+            Cv cv = new Cv();
+            cv.setCandidature(c);
+            cv.setNomFichier(f.getCv().getOriginalFilename());
+            cv.setFichier(contenuCv);
+            cvRepository.save(cv);
+        }
         traceService.tracer(HistoriqueStatut.CANDIDATURE, c.getId(), null, StatutCandidature.CREE, u, null);
         notificationService.notifierCompte(c.getCompte(),
                 "Votre candidature à l'offre « " + offre.getIntitule() + " » a bien été enregistrée.",
                 "/candidat/candidatures/" + c.getId());
         return c;
+    }
+
+    /** CV facultatif : fichier PDF de 5 Mo maximum (vérifié sur son contenu, pas seulement sur son nom). */
+    private static byte[] lireCvPdf(MultipartFile cv) {
+        if (cv.getSize() > TAILLE_MAX_CV) {
+            throw new RegleMetierException("Le CV ne doit pas dépasser 5 Mo");
+        }
+        try {
+            byte[] contenu = cv.getBytes();
+            if (contenu.length < ENTETE_PDF.length || !Arrays.equals(Arrays.copyOf(contenu, ENTETE_PDF.length), ENTETE_PDF)) {
+                throw new RegleMetierException("Le CV doit être un fichier PDF");
+            }
+            return contenu;
+        } catch (IOException e) {
+            throw new RegleMetierException("Le CV n'a pas pu être lu, réessayez avec un autre fichier");
+        }
     }
 
     private Compte compteDuFormulaire(CandidatureForm f) {
@@ -189,6 +226,7 @@ public class CandidatureService {
         }
         c.setDateTestTechnique(f.getDateTestTechnique());
         c.setDateEntretien(f.getDateEntretien());
+        marquerCvTraite(c, u);
         if (f.getCommentaire() != null && !f.getCommentaire().isBlank()) {
             c.setCommentaireRh(f.getCommentaire());
         }
@@ -226,10 +264,25 @@ public class CandidatureService {
             throw new RegleMetierException("Cette candidature ne peut plus être rejetée");
         }
         c.setCommentaireRh(commentaire);
+        marquerCvTraite(c, u);
         changerStatut(c, StatutCandidature.REJETE, u, commentaire);
         notificationService.notifierCompte(c.getCompte(),
                 "Votre candidature « " + c.getOffre().getIntitule() + " » n'a pas été retenue.",
                 "/candidat/candidatures/" + c.getId());
+    }
+
+    /** CV de la candidature (le plus récent), s'il a été déposé. */
+    @Transactional(readOnly = true)
+    public Optional<Cv> cvDe(Candidature c) {
+        return cvRepository.findFirstByCandidatureIdOrderByDateDepotDesc(c.getId());
+    }
+
+    /** Première action RH sur la candidature : l'employé qui la traite et la date sont enregistrés sur le CV. */
+    private void marquerCvTraite(Candidature c, UtilisateurConnecte u) {
+        cvDe(c).filter(cv -> cv.getEmploye() == null).ifPresent(cv -> {
+            cv.setEmploye(employeRepository.findById(u.getId()).orElse(null));
+            cv.setDateTraitement(LocalDateTime.now());
+        });
     }
 
     private Candidature avancer(Integer id, String attendu, String nouveau, UtilisateurConnecte u) {

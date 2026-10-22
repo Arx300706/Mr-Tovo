@@ -35,7 +35,15 @@
                         <dt>Contrat visé</dt><dd th:text="${candidature.typeContrat.libelle}"></dd>
                         <dt>Diplôme</dt><dd th:text="${candidature.diplome}"></dd>
                         <dt>Expérience</dt><dd th:text="${candidature.anneesExperience} + ' an(s)'"></dd>
+                        <dt>CV</dt>
+                        <dd>
+                            <a th:if="${cv != null}" th:href="@{/candidat/candidatures/{id}/cv(id=${candidature.id})}" target="_blank"
+                               th:text="${cv.nomFichier}"></a>
+                            <span class="doux" th:if="${cv == null}">Aucun CV déposé</span>
+                        </dd>
                     </dl>
+                    <h3>Expérience professionnelle</h3>
+                    <p class="texte-long" th:text="${candidature.experienceProfessionnelle ?: '—'}"></p>
                     <h3>Lettre de motivation</h3>
                     <p class="texte-long" th:text="${candidature.lettreMotivation}"></p>
                 </div>

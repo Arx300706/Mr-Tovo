@@ -2,6 +2,7 @@ package com.mrtovo.controller;
 
 import com.mrtovo.dto.ReponseForm;
 import com.mrtovo.entity.Candidature;
+import com.mrtovo.entity.Contrat;
 import com.mrtovo.entity.HistoriqueStatut;
 import com.mrtovo.entity.Proposition;
 import com.mrtovo.entity.reference.StatutProposition;
@@ -9,6 +10,7 @@ import com.mrtovo.entity.reference.TypeContrat;
 import com.mrtovo.security.UtilisateurConnecte;
 import com.mrtovo.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,6 +33,7 @@ public class CandidatController {
     private final CandidatureService candidatureService;
     private final PropositionService propositionService;
     private final ContratService contratService;
+    private final ContratPdfService contratPdfService;
     private final TraceService traceService;
     private final ReferenceService references;
 
@@ -46,6 +49,7 @@ public class CandidatController {
     public String candidature(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u, Model model) {
         Candidature c = candidatureService.trouverPourCandidat(id, u);
         model.addAttribute("candidature", c);
+        model.addAttribute("cv", candidatureService.cvDe(c).orElse(null));
         model.addAttribute("propositions", propositionService.listerPourCandidature(id));
         model.addAttribute("historique", traceService.historique(HistoriqueStatut.CANDIDATURE, id));
         return "candidat/candidature";
@@ -78,11 +82,23 @@ public class CandidatController {
         return "redirect:/candidat/propositions/" + id + "#discussion";
     }
 
+    /** Le candidat peut relire le CV déposé avec sa candidature. */
+    @GetMapping("/candidatures/{id}/cv")
+    public ResponseEntity<byte[]> cv(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u) {
+        return ReponsePdf.cv(candidatureService.cvDe(candidatureService.trouverPourCandidat(id, u)));
+    }
+
     @GetMapping("/contrats/{id}")
     public String contrat(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u, Model model) {
         model.addAttribute("contrat", contratService.trouverPourCandidat(id, u));
         model.addAttribute("historique", traceService.historique(HistoriqueStatut.CONTRAT, id));
         return "candidat/contrat";
+    }
+
+    @GetMapping("/contrats/{id}/pdf")
+    public ResponseEntity<byte[]> pdf(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u) {
+        Contrat c = contratService.trouverPourCandidat(id, u);
+        return ReponsePdf.inline(contratPdfService.generer(c), "contrat-" + c.getId() + ".pdf");
     }
 
     @PostMapping("/contrats/{id}/signer")

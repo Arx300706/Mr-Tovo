@@ -60,6 +60,9 @@
             <a th:href="@{/rh/candidatures}" th:classappend="${pageCourante == '/rh/candidatures'} ? 'actif'">
                 Candidatures <span th:replace="~{fragments/layout :: pastille(${(badges['rhCandidaturesCreees'] ?: 0) + (badges['rhCandidaturesEnCours'] ?: 0)})}"></span>
             </a>
+            <a th:href="@{/rh/cvs}" th:classappend="${pageCourante == '/rh/cvs'} ? 'actif'">
+                CV
+            </a>
             <a th:href="@{/rh/propositions}" th:classappend="${pageCourante == '/rh/propositions'} ? 'actif'">
                 Propositions <span th:replace="~{fragments/layout :: pastille(${(badges['rhCandidaturesSucces'] ?: 0) + (badges['rhPropositionsEnAttente'] ?: 0)})}"></span>
             </a>
