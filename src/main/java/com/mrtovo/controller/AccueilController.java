@@ -3,6 +3,9 @@ package com.mrtovo.controller;
 import com.mrtovo.dto.CandidatureForm;
 import com.mrtovo.entity.Candidature;
 import com.mrtovo.entity.OffreEmploi;
+import com.mrtovo.entity.Ville;
+import com.mrtovo.entity.Commune;
+import com.mrtovo.entity.Fokontany;
 import com.mrtovo.entity.reference.StatutOffre;
 import com.mrtovo.entity.reference.TypeCandidature;
 import com.mrtovo.exception.RegleMetierException;
@@ -101,6 +104,9 @@ public class AccueilController {
         model.addAttribute("offre", offre);
         model.addAttribute("form", form);
         model.addAttribute("typesCandidature", references.tous(TypeCandidature.class));
+        model.addAttribute("villes", references.tous(Ville.class));
+        model.addAttribute("communes", references.tous(Commune.class));
+        model.addAttribute("fokontanyListe", references.tous(Fokontany.class));
         return "public/candidater";
     }
 

@@ -14,6 +14,7 @@
             </div>
         </div>
         <form class="carte" th:action="@{/rh/offres/nouvelle(besoin=${besoin.id})}" th:object="${form}" method="post" novalidate>
+            <input th:replace="~{fragments/layout :: csrf}">
             <div class="champ">
                 <label for="intitule">Intitulé de l'offre</label>
                 <input type="text" th:field="*{intitule}">

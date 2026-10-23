@@ -16,6 +16,7 @@
         </div>
 
         <form class="carte formulaire-candidature" th:action="@{/offres/{id}/candidater(id=${offre.id})}" th:object="${form}" method="post" enctype="multipart/form-data" novalidate>
+            <input th:replace="~{fragments/layout :: csrf}">
             <div class="message erreur" th:if="${#fields.hasErrors('*')}">Merci de corriger les champs en rouge.</div>
 
             <fieldset>
@@ -61,9 +62,35 @@
                         </select>
                     </div>
                 </div>
-                <div class="ligne">
-                    <div class="champ"><label for="adresse">Adresse</label><input type="text" th:field="*{adresse}" autocomplete="street-address"></div>
-                    <div class="champ"><label for="ville">Ville</label><input type="text" th:field="*{ville}" autocomplete="address-level2" placeholder="ex. Antananarivo"></div>
+                <h3>Lieu de résidence actuel</h3>
+                <div class="ligne ligne-adresse">
+                    <div class="champ">
+                        <label for="idVille">Ville</label>
+                        <select th:field="*{idVille}" data-adresse-ville required>
+                            <option value="">— Choisir une ville —</option>
+                            <option th:each="v : ${villes}" th:value="${v.id}" th:text="${v.libelle}"></option>
+                        </select>
+                    </div>
+                    <div class="champ">
+                        <label for="idCommune">Commune</label>
+                        <select th:field="*{idCommune}" data-adresse-commune required>
+                            <option value="">— Choisir une commune —</option>
+                            <option th:each="c : ${communes}" th:value="${c.id}" th:text="${c.libelle}" th:attr="data-ville=${c.ville.id}"></option>
+                        </select>
+                    </div>
+                    <div class="champ">
+                        <label for="idFokontany">Fokontany</label>
+                        <select th:field="*{idFokontany}" data-adresse-fokontany required>
+                            <option value="">— Choisir un fokontany —</option>
+                            <option th:each="f : ${fokontanyListe}" th:value="${f.id}" th:text="${f.libelle}" th:attr="data-commune=${f.commune.id}"></option>
+                        </select>
+                    </div>
+                    <div class="champ">
+                        <label for="lot">Lot / numéro</label>
+                        <input type="text" th:field="*{lot}" placeholder="ex. Lot II M 45">
+                        <div class="aide">Seul élément d’adresse saisi librement.</div>
+                        <div class="erreur-champ" th:errors="*{lot}"></div>
+                    </div>
                 </div>
                 <div class="ligne">
                     <div class="champ"><label for="motDePasse">Mot de passe</label><input type="password" th:field="*{motDePasse}" required></div>

@@ -37,10 +37,12 @@
                 <div class="actions" style="margin-top:1rem">
                     <a class="bouton" th:href="@{/rh/contrats/{id}/pdf(id=${contrat.id})}" target="_blank">Télécharger le contrat (PDF)</a>
                     <form th:if="${s == 'signe'}" th:action="@{/rh/contrats/{id}/valider(id=${contrat.id})}" method="post">
+                        <input th:replace="~{fragments/layout :: csrf}">
                         <button type="submit" class="bouton succes">Signer et valider l'embauche</button>
                     </form>
                     <form th:if="${s == 'cree' or s == 'signe'}" th:action="@{/rh/contrats/{id}/annuler(id=${contrat.id})}" method="post"
                           data-confirmer="Annuler ce contrat ?">
+                        <input th:replace="~{fragments/layout :: csrf}">
                         <button type="submit" class="bouton danger">Annuler le contrat</button>
                     </form>
                 </div>

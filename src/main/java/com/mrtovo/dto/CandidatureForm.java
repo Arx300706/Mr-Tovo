@@ -33,8 +33,12 @@ public class CandidatureForm {
     private LocalDate dateNaissance;
 
     private String sexe;
-    private String adresse;
-    private String ville;
+    private Integer idVille;
+    private Integer idCommune;
+    private Integer idFokontany;
+
+    @Size(max = 100, message = "Le lot ne doit pas dépasser 100 caractères")
+    private String lot;
     private String motDePasse;
     private String confirmation;
 

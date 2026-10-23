@@ -16,13 +16,16 @@
                 <span th:replace="~{fragments/layout :: statut(${offre.statut.libelle})}"></span>
                 <form th:if="${offre.statut.libelle == 'enregistre' and utilisateur.aRole('DIRECTEUR')}"
                       th:action="@{/directeur/offres/{id}/valider(id=${offre.id})}" method="post">
+                    <input th:replace="~{fragments/layout :: csrf}">
                     <button type="submit" class="bouton succes">Valider l'offre (directeur)</button>
                 </form>
                 <form th:if="${offre.statut.libelle == 'valide'}" th:action="@{/rh/offres/{id}/publier(id=${offre.id})}" method="post">
+                    <input th:replace="~{fragments/layout :: csrf}">
                     <button type="submit" class="bouton">Publier</button>
                 </form>
                 <form th:if="${offre.statut.libelle == 'publie'}" th:action="@{/rh/offres/{id}/cloturer(id=${offre.id})}" method="post"
                       data-confirmer="Clôturer cette offre ? Elle ne sera plus visible publiquement.">
+                    <input th:replace="~{fragments/layout :: csrf}">
                     <button type="submit" class="bouton danger">Clôturer</button>
                 </form>
                 <a th:if="${offre.statut.libelle == 'publie'}" class="bouton secondaire" th:href="@{/offres/{id}(id=${offre.id})}">Voir la page publique</a>

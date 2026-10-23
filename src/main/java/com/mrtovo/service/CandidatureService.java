@@ -207,8 +207,20 @@ public class CandidatureService {
         compte.setTelephone(f.getTelephone());
         compte.setDateNaissance(f.getDateNaissance());
         compte.setSexe(f.getSexe());
-        compte.setAdresse(f.getAdresse());
-        compte.setVille(f.getVille());
+        Ville ville = references.parId(Ville.class, f.getIdVille());
+        Commune commune = references.parId(Commune.class, f.getIdCommune());
+        Fokontany fokontany = references.parId(Fokontany.class, f.getIdFokontany());
+        if (ville == null || commune == null || fokontany == null) {
+            throw new RegleMetierException("La ville, la commune et le fokontany sont obligatoires");
+        }
+        if (!Objects.equals(commune.getVille().getId(), ville.getId())
+                || !Objects.equals(fokontany.getCommune().getId(), commune.getId())) {
+            throw new RegleMetierException("L'adresse sélectionnée est incohérente");
+        }
+        compte.setVilleResidence(ville);
+        compte.setCommune(commune);
+        compte.setFokontany(fokontany);
+        compte.setLot(f.getLot() == null ? null : f.getLot().trim());
         return compte;
     }
 

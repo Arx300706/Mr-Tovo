@@ -39,6 +39,34 @@ public class Compte {
 
     private String ville;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_ville")
+    private Ville villeResidence;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_commune")
+    private Commune commune;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_fokontany")
+    private Fokontany fokontany;
+
+    private String lot;
+
+    public String getAdresseStructuree() {
+        StringBuilder resultat = new StringBuilder();
+        if (lot != null && !lot.isBlank()) resultat.append(lot);
+        if (fokontany != null) ajouter(resultat, fokontany.getLibelle());
+        if (commune != null) ajouter(resultat, commune.getLibelle());
+        if (villeResidence != null) ajouter(resultat, villeResidence.getLibelle());
+        return resultat.isEmpty() ? null : resultat.toString();
+    }
+
+    private static void ajouter(StringBuilder resultat, String valeur) {
+        if (!resultat.isEmpty()) resultat.append(", ");
+        resultat.append(valeur);
+    }
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime dateCreation;

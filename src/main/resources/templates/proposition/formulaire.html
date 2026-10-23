@@ -42,6 +42,7 @@
 
         <form class="carte" th:object="${form}" method="post" novalidate
               th:action="${revision != null} ? @{/rh/propositions/{id}/reviser(id=${revision.id})} : @{/rh/propositions/nouvelle(candidature=${candidature.id})}">
+            <input th:replace="~{fragments/layout :: csrf}">
             <fieldset>
                 <legend>Poste</legend>
                 <div class="ligne">

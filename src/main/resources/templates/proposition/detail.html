@@ -27,10 +27,12 @@
                 réviser la proposition, ou clore la négociation.</p>
             <div class="actions">
                 <form th:action="@{/rh/propositions/{id}/accepter-contre-proposition(id=${p.id})}" method="post">
+                    <input th:replace="~{fragments/layout :: csrf}">
                     <button type="submit" class="bouton succes">Accepter ses souhaits</button>
                 </form>
                 <a class="bouton" th:href="@{/rh/propositions/{id}/reviser(id=${p.id})}">Réviser la proposition</a>
                 <form th:action="@{/rh/propositions/{id}/clore(id=${p.id})}" method="post" data-confirmer="Clore la négociation ? La proposition sera refusée.">
+                    <input th:replace="~{fragments/layout :: csrf}">
                     <button type="submit" class="bouton danger">Clore la négociation</button>
                 </form>
             </div>
@@ -46,6 +48,7 @@
                 <span th:replace="~{fragments/layout :: statut(${contrat.statut.libelle})}"></span>
             </p>
             <form th:if="${contrat == null}" th:action="@{/rh/contrats/generer(proposition=${p.id})}" method="post">
+                <input th:replace="~{fragments/layout :: csrf}">
                 <p class="doux">La proposition est acceptée : générez le contrat de travail.</p>
                 <button type="submit" class="bouton">Générer le contrat</button>
             </form>

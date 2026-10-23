@@ -61,6 +61,7 @@
                         </table>
                     </div>
                     <form th:action="@{/rh/besoins/{id}/envoyer-finance(id=${besoin.id})}" method="post" style="margin-top:1rem">
+                        <input th:replace="~{fragments/layout :: csrf}">
                         <div class="ligne">
                             <div class="champ">
                                 <label for="salaireMensuel">Salaire mensuel adéquat (Ar)</label>
@@ -102,10 +103,12 @@
                     <div class="actions">
                         <form id="form-valider" th:if="${budget != null and budget.couvre(depense)}"
                               th:action="@{/finance/besoins/{id}/valider(id=${besoin.id})}" method="post">
+                            <input th:replace="~{fragments/layout :: csrf}">
                             <button type="submit" class="bouton succes">Valider (budget OK)</button>
                         </form>
                         <form th:action="@{/finance/besoins/{id}/refuser(id=${besoin.id})}" method="post"
                               onsubmit="this.querySelector('[name=commentaire]').value = document.getElementById('commentaire-finance').value">
+                            <input th:replace="~{fragments/layout :: csrf}">
                             <input type="hidden" name="commentaire">
                             <button type="submit" class="bouton danger">Refuser</button>
                         </form>

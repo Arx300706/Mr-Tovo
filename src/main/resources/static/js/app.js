@@ -95,4 +95,29 @@ document.addEventListener("DOMContentLoaded", () => {
         section.querySelector("[data-ajouter]").addEventListener("click", ajouter);
         ajouter();
     });
+
+    // Adresse structurée : Ville → Commune → Fokontany.
+    const ville = document.querySelector("[data-adresse-ville]");
+    const commune = document.querySelector("[data-adresse-commune]");
+    const fokontany = document.querySelector("[data-adresse-fokontany]");
+    if (ville && commune && fokontany) {
+        const filtrerCommunes = (reinitialiser = false) => {
+            if (reinitialiser) commune.value = "";
+            commune.querySelectorAll("option[data-ville]").forEach(option => {
+                option.hidden = option.dataset.ville !== ville.value;
+                option.disabled = option.hidden;
+            });
+            filtrerFokontany(reinitialiser);
+        };
+        const filtrerFokontany = (reinitialiser = false) => {
+            if (reinitialiser) fokontany.value = "";
+            fokontany.querySelectorAll("option[data-commune]").forEach(option => {
+                option.hidden = option.dataset.commune !== commune.value;
+                option.disabled = option.hidden;
+            });
+        };
+        ville.addEventListener("change", () => filtrerCommunes(true));
+        commune.addEventListener("change", () => filtrerFokontany(true));
+        filtrerCommunes(false);
+    }
 });

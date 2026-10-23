@@ -225,6 +225,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--p
 textarea { min-height: 110px; resize: vertical; }
 .ligne { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 .ligne-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ligne-adresse { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .facultatif { color: var(--texte-doux); font-size: .75rem; font-weight: 500; }
 .formulaire-candidature { max-width: 960px; }
 .formulaire-candidature fieldset { padding: 1.4rem; margin-bottom: 1.5rem; }

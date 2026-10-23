@@ -23,6 +23,7 @@
                         <td th:text="${p.typeContrat.libelle}"></td>
                         <td>
                             <form th:action="@{/rh/contrats/generer(proposition=${p.id})}" method="post">
+                                <input th:replace="~{fragments/layout :: csrf}">
                                 <button type="submit" class="bouton petit">Générer le contrat</button>
                             </form>
                         </td>

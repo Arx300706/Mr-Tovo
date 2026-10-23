@@ -19,7 +19,7 @@
             <div class="cv-coordonnees">
                 <a th:href="'mailto:' + ${compte.email}" th:text="${compte.email}"></a>
                 <a th:if="${compte.telephone}" th:href="'tel:' + ${compte.telephone}" th:text="${compte.telephone}"></a>
-                <span th:if="${compte.ville}" th:text="${compte.ville}"></span>
+                <span th:if="${compte.adresseStructuree}" th:text="${compte.adresseStructuree}"></span>
             </div>
         </div>
     </header>

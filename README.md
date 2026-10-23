@@ -35,6 +35,7 @@ Pour mettre à jour une base déjà créée sans effacer ses données :
 
 ```bash
 psql -h localhost -U postgres -d rh -f src/main/resources/db/migration_cv_en_ligne.sql
+psql -h localhost -U postgres -d rh -f src/main/resources/db/migration_adresse.sql
 ```
 
 Connexion par défaut : `jdbc:postgresql://localhost:5432/rh`, utilisateur `postgres`, mot de passe `postgres`.

@@ -14,6 +14,7 @@
         </div>
 
         <form class="carte" th:action="@{/manager/besoins/nouveau}" th:object="${form}" method="post" novalidate>
+            <input th:replace="~{fragments/layout :: csrf}">
             <fieldset>
                 <legend>Type de besoin</legend>
                 <div class="choix">

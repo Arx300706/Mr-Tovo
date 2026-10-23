@@ -16,6 +16,24 @@ INSERT INTO statut_contrat (libelle) VALUES ('cree'), ('signe'), ('valide'), ('a
 INSERT INTO type_contrat (libelle) VALUES ('CE'), ('CDD'), ('CDI');
 INSERT INTO statut_proposition (libelle) VALUES ('enregistre'), ('valide'), ('refuse'), ('en attente');
 
+-- Localités de résidence proposées dans le formulaire.
+INSERT INTO ville (libelle) VALUES ('Antananarivo'), ('Antsirabe'), ('Toamasina'), ('Fianarantsoa'), ('Mahajanga'), ('Toliara');
+
+INSERT INTO commune (id_ville, libelle) VALUES
+    (1, 'Antananarivo Renivohitra'), (1, 'Ambohimangakely'), (1, 'Alasora'), (1, 'Tanjombato'),
+    (2, 'Antsirabe I'), (3, 'Toamasina I'), (4, 'Fianarantsoa I'), (5, 'Mahajanga I'), (6, 'Toliara I');
+
+INSERT INTO fokontany (id_commune, libelle) VALUES
+    (1, 'Analakely'), (1, 'Antaninarenina'), (1, 'Isoraka'), (1, 'Ankadifotsy'), (1, 'Andavamamba'),
+    (2, 'Ambohimangakely'), (2, 'Betsizaraina'),
+    (3, 'Alasora'), (3, 'Ambohimarina'),
+    (4, 'Tanjombato'), (4, 'Ambohimanatrika'),
+    (5, 'Mahazoarivo'), (5, 'Avaratsena'),
+    (6, 'Tanambao V'), (6, 'Ankirihiry'),
+    (7, 'Ambatomena'), (7, 'Talatamaty'),
+    (8, 'Mahabibo'), (8, 'Tsararano'),
+    (9, 'Tanambao I'), (9, 'Betania');
+
 -- -----------------------------------------------------------------
 -- 2. STRUCTURE DE L'ENTREPRISE (démo)
 -- -----------------------------------------------------------------

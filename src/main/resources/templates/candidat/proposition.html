@@ -26,6 +26,7 @@
         <!-- Réponse champ par champ -->
         <form class="carte" th:if="${proposition.statut.libelle == 'enregistre' and !proposition.estExpiree()}"
               th:action="@{/candidat/propositions/{id}/reponse(id=${proposition.id})}" th:object="${form}" method="post">
+            <input th:replace="~{fragments/layout :: csrf}">
             <h2>Votre réponse</h2>
             <p class="doux">Pour chaque point, répondez Oui ou Non. Si vous répondez Non, indiquez ce que vous souhaitez.
                 Tout Oui : la proposition est acceptée. Tout Non : elle est refusée. Sinon, la RH étudie votre contre-proposition.</p>

@@ -93,6 +93,7 @@
         <span th:if="${utilisateur.estEmploye()}"
               th:text="${utilisateur.identifiant} + (${utilisateur.libellePoste} != null ? ' · ' + ${utilisateur.libellePoste} : '')">Matricule</span>
         <form th:action="@{/deconnexion}" method="post">
+            <input th:replace="~{fragments/layout :: csrf}">
             <button type="submit" class="lien-menu">Se déconnecter</button>
         </form>
     </div>
@@ -106,6 +107,9 @@
     <div class="message succes" th:if="${succes}" th:text="${succes}"></div>
     <div class="message erreur" th:if="${erreur}" th:text="${erreur}"></div>
 </div>
+
+<!-- ============ Protection CSRF des formulaires ============ -->
+<input th:fragment="csrf" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
 <!-- ============ Badge de statut ============ -->
 <span th:fragment="statut(libelle)" class="statut"

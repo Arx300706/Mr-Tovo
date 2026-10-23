@@ -21,6 +21,7 @@
                 <div class="carte" th:if="${s == 'cree' or s == 'selectionne'}">
                     <h2 th:text="${s == 'cree'} ? 'Sélectionner et planifier les épreuves' : 'Modifier les dates'">Planifier</h2>
                     <form th:action="@{/rh/candidatures/{id}/planifier(id=${c.id})}" th:object="${planification}" method="post" novalidate>
+                        <input th:replace="~{fragments/layout :: csrf}">
                         <div class="ligne">
                             <div class="champ">
                                 <label for="dateTestTechnique">Test technique</label>
@@ -45,12 +46,15 @@
                     <h2>Résultat des épreuves</h2>
                     <div class="actions">
                         <form th:if="${s == 'selectionne'}" th:action="@{/rh/candidatures/{id}/teste(id=${c.id})}" method="post">
+                            <input th:replace="~{fragments/layout :: csrf}">
                             <button type="submit" class="bouton">Test technique réussi</button>
                         </form>
                         <form th:if="${s == 'teste techniquement'}" th:action="@{/rh/candidatures/{id}/entretien-ok(id=${c.id})}" method="post">
+                            <input th:replace="~{fragments/layout :: csrf}">
                             <button type="submit" class="bouton">Entretien réussi</button>
                         </form>
                         <form th:if="${s == 'entretien ok'}" th:action="@{/rh/candidatures/{id}/succes(id=${c.id})}" method="post">
+                            <input th:replace="~{fragments/layout :: csrf}">
                             <button type="submit" class="bouton succes">Candidat retenu (succès)</button>
                         </form>
                     </div>
@@ -73,6 +77,7 @@
                     <h2>Rejeter</h2>
                     <form th:action="@{/rh/candidatures/{id}/rejeter(id=${c.id})}" method="post"
                           data-confirmer="Rejeter cette candidature ?">
+                        <input th:replace="~{fragments/layout :: csrf}">
                         <div class="champ"><input type="text" name="commentaire" placeholder="Motif (facultatif)"></div>
                         <button type="submit" class="bouton danger">Rejeter la candidature</button>
                     </form>
@@ -101,7 +106,7 @@
                             <span th:text="${c.compte.sexe ?: '—'}"></span>
                             <span class="doux" th:if="${besoin.sexe != null}" th:text="'(demandé : ' + ${besoin.sexe} + ')'"></span>
                         </dd>
-                        <dt>Adresse</dt><dd th:text="${c.compte.adresse ?: '—'}"></dd>
+                        <dt>Adresse actuelle</dt><dd th:text="${c.compte.adresseStructuree ?: (c.compte.adresse ?: '—')}"></dd>
                         <dt>Diplôme</dt><dd th:text="${c.diplome}"></dd>
                         <dt>Expérience</dt><dd th:text="${c.anneesExperience} + ' an(s)'"></dd>
                         <dt>CV</dt>

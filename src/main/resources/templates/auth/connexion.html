@@ -17,6 +17,7 @@
             </div>
 
             <form class="carte" data-panneau="employe" th:action="@{/connexion}" method="post">
+                <input th:replace="~{fragments/layout :: csrf}">
                 <div class="champ">
                     <label for="matricule">Matricule</label>
                     <input type="text" id="matricule" name="identifiant" autocomplete="username" required autofocus>
@@ -29,6 +30,7 @@
             </form>
 
             <form class="carte cache" data-panneau="candidat" th:action="@{/connexion}" method="post">
+                <input th:replace="~{fragments/layout :: csrf}">
                 <p class="doux">Votre compte candidat est créé quand vous postulez à une offre.</p>
                 <div class="champ">
                     <label for="email">E-mail</label>

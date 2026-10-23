@@ -66,6 +66,24 @@ CREATE TABLE statut_proposition (
     libelle               VARCHAR(100) NOT NULL UNIQUE
 );
 
+-- Adresse structurée de résidence (évite les saisies libres incohérentes).
+CREATE TABLE ville (
+    id_ville SERIAL PRIMARY KEY,
+    libelle VARCHAR(150) NOT NULL UNIQUE
+);
+CREATE TABLE commune (
+    id_commune SERIAL PRIMARY KEY,
+    id_ville INT NOT NULL REFERENCES ville (id_ville),
+    libelle VARCHAR(150) NOT NULL,
+    UNIQUE (id_ville, libelle)
+);
+CREATE TABLE fokontany (
+    id_fokontany SERIAL PRIMARY KEY,
+    id_commune INT NOT NULL REFERENCES commune (id_commune),
+    libelle VARCHAR(150) NOT NULL,
+    UNIQUE (id_commune, libelle)
+);
+
 -- -----------------------------------------------------------------
 -- 2. STRUCTURE ENTREPRISE
 -- -----------------------------------------------------------------
@@ -188,6 +206,10 @@ CREATE TABLE compte (
     sexe           VARCHAR(20),
     adresse        VARCHAR(255),
     ville          VARCHAR(100),
+    id_ville       INT REFERENCES ville (id_ville),
+    id_commune     INT REFERENCES commune (id_commune),
+    id_fokontany   INT REFERENCES fokontany (id_fokontany),
+    lot             VARCHAR(100),
     date_creation  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

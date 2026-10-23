@@ -12,6 +12,7 @@
                 <p>Messages de l'entreprise et suivi de vos dossiers.</p>
             </div>
             <form th:action="@{/notifications/tout-lu}" method="post" th:unless="${#lists.isEmpty(notifications)}">
+                <input th:replace="~{fragments/layout :: csrf}">
                 <button type="submit" class="bouton secondaire">Tout marquer comme lu</button>
             </form>
         </div>

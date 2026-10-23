@@ -38,10 +38,12 @@
                     <td class="actions">
                         <form th:if="${o.statut.libelle == 'enregistre' and utilisateur.aRole('DIRECTEUR')}"
                               th:action="@{/directeur/offres/{id}/valider(id=${o.id})}" method="post">
+                            <input th:replace="~{fragments/layout :: csrf}">
                             <button type="submit" class="bouton petit succes">Valider</button>
                         </form>
                         <form th:if="${o.statut.libelle == 'valide' and utilisateur.aRole('RH')}"
                               th:action="@{/rh/offres/{id}/publier(id=${o.id})}" method="post">
+                            <input th:replace="~{fragments/layout :: csrf}">
                             <button type="submit" class="bouton petit">Publier</button>
                         </form>
                         <a class="bouton petit secondaire" th:href="@{/rh/offres/{id}(id=${o.id})}">Ouvrir</a>
