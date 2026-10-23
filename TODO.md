@@ -155,3 +155,6 @@ besoin «cree» → «envoie Finance» → «valide Finance» → offre «enregi
 - Étape 12 : la négociation est stockée dans `reponse_proposition` (une ligne par réponse) et `message_proposition` (discussion), et la RH a trois actions explicites (accepter les souhaits, réviser, clore).
 - Étapes 13–14 : le contrat n'a pas encore d'employé quand il est créé (`id_employe` rempli à la validation) ; l'ancien contrat d'un employé interne passe à `rompu`.
 - Ajout de la **traçabilité des statuts** (`historique_statut`) et des **notifications** (`notification`) demandées dans le flux.
+
+
+psql -h localhost -U postgres -d rh -v ON_ERROR_STOP=1 -f src/main/resources/db/base_complete.sql

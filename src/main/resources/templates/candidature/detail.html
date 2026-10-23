@@ -121,8 +121,6 @@
                         <dt>Entretien</dt><dd th:text="${c.dateEntretien != null ? #temporals.format(c.dateEntretien, 'dd/MM/yyyy HH:mm') : '—'}"></dd>
                         <th:block th:if="${c.commentaireRh}"><dt>Commentaire RH</dt><dd th:text="${c.commentaireRh}"></dd></th:block>
                     </dl>
-                    <h3>Expérience professionnelle</h3>
-                    <p class="texte-long" th:text="${c.experienceProfessionnelle ?: '—'}"></p>
                     <h3>Lettre de motivation</h3>
                     <p class="texte-long" th:text="${c.lettreMotivation}"></p>
                 </div>

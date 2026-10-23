@@ -130,7 +130,6 @@ public class CandidatureService {
         c.setDiplome(f.getDiplome());
         c.setAnneesExperience(f.getAnneesExperience());
         c.setLettreMotivation(f.getLettreMotivation());
-        c.setExperienceProfessionnelle(f.getExperienceProfessionnelle());
         c.setMetierRecherche(f.getMetierRecherche());
         c.setPresentation(f.getPresentation());
         c.setFormations(f.getFormations());
@@ -270,8 +269,8 @@ public class CandidatureService {
             element.setType(type);
             element.setTitre(form.getTitre().trim());
             element.setSousTitre(form.getSousTitre());
-            element.setDateDebut(form.getDateDebut());
-            element.setDateFin(form.getDateFin());
+            element.setDateDebut(form.getDateDebut() == null ? null : form.getDateDebut().toString());
+            element.setDateFin(form.getDateFin() == null ? null : form.getDateFin().toString());
             element.setDescription(form.getDescription());
             element.setNiveau(form.getNiveau());
             element.setUrl(CvElement.LIEN.equals(type) ? normaliserLien(form.getUrl()) : form.getUrl());

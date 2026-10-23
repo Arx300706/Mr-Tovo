@@ -46,19 +46,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const definitions = {
         experience: [
             ["titre", "Entreprise", "text"], ["sousTitre", "Poste", "text"],
-            ["dateDebut", "Date de début", "month"], ["dateFin", "Date de fin", "month"],
+            ["dateDebut", "Date de début", "date"], ["dateFin", "Date de fin", "date"],
             ["description", "Missions et résultats", "textarea"]
         ],
         formation: [
             ["titre", "Établissement", "text"], ["sousTitre", "Diplôme / formation", "text"],
-            ["dateDebut", "Début", "month"], ["dateFin", "Fin", "month"],
+            ["dateDebut", "Début", "date"], ["dateFin", "Fin", "date"],
             ["description", "Description", "textarea"]
         ],
         competence: [["titre", "Compétence", "text"], ["niveau", "Niveau", "text"]],
         qualite: [["titre", "Qualité", "text"], ["description", "Exemple concret", "text"]],
         langue: [["titre", "Langue", "text"], ["niveau", "Niveau", "text"]],
         projet: [["titre", "Nom du projet", "text"], ["sousTitre", "Rôle / technologies", "text"], ["description", "Description et résultat", "textarea"], ["url", "Lien", "url"]],
-        certification: [["titre", "Certification", "text"], ["sousTitre", "Organisme", "text"], ["dateFin", "Date d'obtention", "month"], ["url", "Lien", "url"]],
+        certification: [["titre", "Certification", "text"], ["sousTitre", "Organisme", "text"], ["dateFin", "Date d'obtention", "date"], ["url", "Lien", "url"]],
         interet: [["titre", "Centre d’intérêt", "text"], ["description", "Précision", "text"]],
         lien: [["titre", "Nom du lien", "text"], ["url", "Adresse web", "url"]]
     };

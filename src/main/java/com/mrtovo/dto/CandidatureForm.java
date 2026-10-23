@@ -54,9 +54,6 @@ public class CandidatureForm {
     @NotBlank(message = "La lettre de motivation est obligatoire")
     private String lettreMotivation;
 
-    /** Parcours professionnel détaillé : employeurs, postes, missions (facultatif). */
-    private String experienceProfessionnelle;
-
     // --- CV en ligne ---
     @Size(max = 150, message = "Ne doit pas dépasser 150 caractères")
     private String metierRecherche;
@@ -103,8 +100,12 @@ public class CandidatureForm {
     public static class CvElementForm {
         private String titre;
         private String sousTitre;
-        private String dateDebut;
-        private String dateFin;
+
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        private LocalDate dateDebut;
+
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        private LocalDate dateFin;
         private String description;
         private String niveau;
         private String url;
