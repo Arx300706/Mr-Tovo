@@ -65,7 +65,7 @@
                         <div class="ligne">
                             <div class="champ">
                                 <label for="salaireMensuel">Salaire mensuel adéquat (Ar)</label>
-                                <input type="number" id="salaireMensuel" name="salaireMensuel" min="1" step="1000" required
+                                <input type="number" id="salaireMensuel" name="salaireMensuel" min="1000" step="1000" required
                                        th:value="${grille.size() > 0 and besoin.poste != null} ? ${grille[0].valeur.longValue()} : ''">
                             </div>
                         </div>
