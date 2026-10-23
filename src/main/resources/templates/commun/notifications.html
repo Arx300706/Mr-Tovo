@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Notifications')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1>Notifications</h1>
+                <p>Messages de l'entreprise et suivi de vos dossiers.</p>
+            </div>
+            <form th:action="@{/notifications/tout-lu}" method="post" th:unless="${#lists.isEmpty(notifications)}">
+                <button type="submit" class="bouton secondaire">Tout marquer comme lu</button>
+            </form>
+        </div>
+        <div class="carte">
+            <p class="vide" th:if="${#lists.isEmpty(notifications)}">Aucune notification.</p>
+            <div class="notif" th:each="n : ${notifications}" th:classappend="${!n.lue} ? 'non-lue'">
+                <a th:href="@{/notifications/{id}(id=${n.id})}" th:text="${n.message}" style="flex:1"></a>
+                <span class="doux" th:text="${#temporals.format(n.dateCreation, 'dd/MM/yyyy HH:mm')}"></span>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${offre.intitule})}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/rh/offres}">← Offres d'emploi</a></p>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="${offre.intitule}">Offre</h1>
+                <p th:text="${offre.departement.libelle} + ' · ' + ${offre.service.libelle} + ' — créée le ' + ${#temporals.format(offre.dateCreation, 'dd/MM/yyyy')}"></p>
+            </div>
+            <div class="actions">
+                <span th:replace="~{fragments/layout :: statut(${offre.statut.libelle})}"></span>
+                <form th:if="${offre.statut.libelle == 'enregistre' and utilisateur.aRole('DIRECTEUR')}"
+                      th:action="@{/directeur/offres/{id}/valider(id=${offre.id})}" method="post">
+                    <button type="submit" class="bouton succes">Valider l'offre (directeur)</button>
+                </form>
+                <form th:if="${offre.statut.libelle == 'valide'}" th:action="@{/rh/offres/{id}/publier(id=${offre.id})}" method="post">
+                    <button type="submit" class="bouton">Publier</button>
+                </form>
+                <form th:if="${offre.statut.libelle == 'publie'}" th:action="@{/rh/offres/{id}/cloturer(id=${offre.id})}" method="post"
+                      data-confirmer="Clôturer cette offre ? Elle ne sera plus visible publiquement.">
+                    <button type="submit" class="bouton danger">Clôturer</button>
+                </form>
+                <a th:if="${offre.statut.libelle == 'publie'}" class="bouton secondaire" th:href="@{/offres/{id}(id=${offre.id})}">Voir la page publique</a>
+            </div>
+        </div>
+        <div class="message info" th:if="${offre.statut.libelle == 'enregistre'}">En attente de validation par le directeur.</div>
+
+        <div class="grille-2">
+            <div>
+                <div class="carte">
+                    <h2>Contenu de l'offre</h2>
+                    <dl class="fiche">
+                        <dt>Besoin d'origine</dt><dd><a th:href="@{/besoins/{id}(id=${offre.besoin.id})}" th:text="'n°' + ${offre.besoin.id} + ' — ' + ${offre.besoin.intitule}"></a></dd>
+                        <dt>Postes</dt><dd th:text="${offre.besoin.nombre}"></dd>
+                        <dt>Contrat</dt><dd th:text="${offre.besoin.typeContrat.libelle}"></dd>
+                        <dt>Salaire prévu</dt><dd><span th:replace="~{fragments/layout :: montant(${offre.besoin.salaireMensuel})}"></span></dd>
+                        <dt>Date limite</dt><dd th:text="${offre.dateFin != null ? #temporals.format(offre.dateFin, 'dd/MM/yyyy') : '—'}"></dd>
+                    </dl>
+                    <h3>Description</h3>
+                    <p class="texte-long" th:text="${offre.description}"></p>
+                    <th:block th:if="${offre.profil}"><h3>Profil recherché</h3><p class="texte-long" th:text="${offre.profil}"></p></th:block>
+                </div>
+                <div class="carte">
+                    <h2 th:text="'Candidatures (' + ${#lists.size(candidatures)} + ')'">Candidatures</h2>
+                    <div class="tableau-conteneur">
+                        <table>
+                            <thead><tr><th>Candidat</th><th>Type</th><th>Date</th><th>Statut</th></tr></thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(candidatures)}"><td colspan="4" class="vide">Aucune candidature.</td></tr>
+                            <tr th:each="c : ${candidatures}">
+                                <td><a th:href="@{/rh/candidatures/{id}(id=${c.id})}" th:text="${c.compte.nomComplet}"></a></td>
+                                <td th:text="${c.typeCandidature.libelle}"></td>
+                                <td th:text="${#temporals.format(c.dateCandidature, 'dd/MM/yyyy')}"></td>
+                                <td><span th:replace="~{fragments/layout :: statut(${c.statut.libelle})}"></span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: historique(${historique})}"></div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

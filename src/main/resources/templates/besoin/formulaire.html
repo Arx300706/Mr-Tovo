@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Exprimer un besoin')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page">
+            <div>
+                <h1>Exprimer un besoin en personnel</h1>
+                <p th:text="${directeur} ? 'Direction : vous pouvez exprimer un besoin pour n’importe quel département.' : 'Département : ' + ${utilisateur.libelleDepartement}"></p>
+            </div>
+        </div>
+
+        <form class="carte" th:action="@{/manager/besoins/nouveau}" th:object="${form}" method="post" novalidate>
+            <fieldset>
+                <legend>Type de besoin</legend>
+                <div class="choix">
+                    <label th:each="t : ${typesBesoin}">
+                        <input type="radio" th:field="*{idTypeBesoin}" th:value="${t.id}">
+                        <span th:text="${t.libelle == 'creation poste' ? 'Création de poste' : (t.libelle == 'recherche personnel' ? 'Recherche de personnel pour un poste' : 'Recherche de stagiaire')}"></span>
+                    </label>
+                </div>
+                <div class="erreur-champ" th:errors="*{idTypeBesoin}"></div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Poste recherché</legend>
+                <div class="ligne">
+                    <div class="champ" th:if="${directeur}">
+                        <label for="idDepartement">Département</label>
+                        <select th:field="*{idDepartement}">
+                            <option th:each="d : ${departements}" th:value="${d.id}" th:text="${d.libelle}"></option>
+                        </select>
+                    </div>
+                    <div class="champ">
+                        <label for="idService">Service</label>
+                        <select th:field="*{idService}">
+                            <option value="">Choisir…</option>
+                            <option th:each="s : ${services}" th:value="${s.id}"
+                                    th:text="${directeur} ? ${s.departement.libelle} + ' · ' + ${s.libelle} : ${s.libelle}"></option>
+                        </select>
+                        <div class="erreur-champ" th:errors="*{idService}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="idPoste">Poste existant concerné</label>
+                        <select th:field="*{idPoste}">
+                            <option value="">— Aucun (nouveau poste) —</option>
+                            <option th:each="p : ${postes}" th:value="${p.id}"
+                                    th:text="${p.libelle} + (${p.estOccupe} ? ' (occupé)' : ' (vacant)')"></option>
+                        </select>
+                        <div class="aide">Obligatoire pour une recherche de personnel.</div>
+                    </div>
+                </div>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="intitule">Intitulé du besoin / du poste</label>
+                        <input type="text" th:field="*{intitule}" placeholder="ex. Développeur junior">
+                        <div class="erreur-champ" th:errors="*{intitule}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="nombre">Nombre de personnes</label>
+                        <input type="number" min="1" th:field="*{nombre}">
+                        <div class="erreur-champ" th:errors="*{nombre}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="idTypeContrat">Type de contrat</label>
+                        <select th:field="*{idTypeContrat}">
+                            <option value="">Choisir…</option>
+                            <option th:each="t : ${typesContrat}" th:value="${t.id}" th:text="${t.libelle}"></option>
+                        </select>
+                        <div class="erreur-champ" th:errors="*{idTypeContrat}"></div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Profil et conditions</legend>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="sexe">Sexe</label>
+                        <select th:field="*{sexe}">
+                            <option value="Indifférent">Indifférent</option>
+                            <option value="Homme">Homme</option>
+                            <option value="Femme">Femme</option>
+                        </select>
+                    </div>
+                    <div class="champ">
+                        <label for="ageMin">Âge minimum</label>
+                        <input type="number" th:field="*{ageMin}">
+                        <div class="erreur-champ" th:errors="*{ageMin}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="ageMax">Âge maximum</label>
+                        <input type="number" th:field="*{ageMax}">
+                        <div class="erreur-champ" th:errors="*{ageMax}"></div>
+                    </div>
+                </div>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="dateCommencement">Date de commencement souhaitée</label>
+                        <input type="date" th:field="*{dateCommencement}">
+                        <div class="erreur-champ" th:errors="*{dateCommencement}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="budget">Budget mensuel estimé (Ar)</label>
+                        <input type="number" min="0" step="1000" th:field="*{budget}">
+                        <div class="erreur-champ" th:errors="*{budget}"></div>
+                    </div>
+                </div>
+                <div class="champ">
+                    <label for="motif">Motif</label>
+                    <textarea th:field="*{motif}" rows="4" placeholder="Pourquoi ce besoin ?"></textarea>
+                    <div class="erreur-champ" th:errors="*{motif}"></div>
+                </div>
+            </fieldset>
+
+            <button type="submit" class="bouton">Valider le besoin</button>
+        </form>
+    </main>
+</div>
+</body>
+</html>

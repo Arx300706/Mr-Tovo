@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Nouvelle offre')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/besoins/{id}(id=${besoin.id})}">← Besoin n°<span th:text="${besoin.id}"></span></a></p>
+        <div class="entete-page">
+            <div>
+                <h1>Saisir l'offre d'emploi</h1>
+                <p th:text="'Besoin : ' + ${besoin.intitule} + ' — ' + ${besoin.nombre} + ' × ' + ${besoin.typeContrat.libelle} + ', ' + ${besoin.departement.libelle} + ' · ' + ${besoin.service.libelle}"></p>
+            </div>
+        </div>
+        <form class="carte" th:action="@{/rh/offres/nouvelle(besoin=${besoin.id})}" th:object="${form}" method="post" novalidate>
+            <div class="champ">
+                <label for="intitule">Intitulé de l'offre</label>
+                <input type="text" th:field="*{intitule}">
+                <div class="erreur-champ" th:errors="*{intitule}"></div>
+            </div>
+            <div class="champ">
+                <label for="description">Description du poste</label>
+                <textarea th:field="*{description}" rows="6"></textarea>
+                <div class="erreur-champ" th:errors="*{description}"></div>
+            </div>
+            <div class="champ">
+                <label for="profil">Profil recherché</label>
+                <textarea th:field="*{profil}" rows="4" placeholder="Compétences, diplômes, qualités…"></textarea>
+            </div>
+            <div class="ligne">
+                <div class="champ">
+                    <label for="dateFin">Date limite de candidature</label>
+                    <input type="date" th:field="*{dateFin}">
+                    <div class="erreur-champ" th:errors="*{dateFin}"></div>
+                </div>
+            </div>
+            <p class="doux">L'offre sera enregistrée au statut « enregistre » puis devra être validée par le directeur avant publication.</p>
+            <button type="submit" class="bouton">Enregistrer l'offre</button>
+        </form>
+    </main>
+</div>
+</body>
+</html>

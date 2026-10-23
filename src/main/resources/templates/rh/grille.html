@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Grille salariale')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div class="entete-page">
+            <div>
+                <h1>Grille salariale</h1>
+                <p>Salaire mensuel par poste selon l'ancienneté.</p>
+            </div>
+        </div>
+        <div class="carte tableau-conteneur">
+            <table>
+                <thead><tr><th>Département</th><th>Poste</th><th>Ancienneté</th><th class="nombre">Salaire mensuel</th><th class="nombre">Coût annuel</th></tr></thead>
+                <tbody>
+                <tr th:each="g : ${grille}">
+                    <td th:text="${g.poste.departement != null ? g.poste.departement.libelle : '—'}"></td>
+                    <td th:text="${g.poste.libelle}"></td>
+                    <td th:text="${g.ancienneteMin} + ' à ' + ${g.ancienneteMax} + ' ans'"></td>
+                    <td class="nombre"><span th:replace="~{fragments/layout :: montant(${g.valeur})}"></span></td>
+                    <td class="nombre"><span th:replace="~{fragments/layout :: montant(${g.valeur * 12})}"></span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

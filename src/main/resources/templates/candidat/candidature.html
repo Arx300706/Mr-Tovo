@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ma candidature')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/candidat}">← Mon espace</a></p>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="${candidature.offre.intitule}">Offre</h1>
+                <p th:text="'Candidature du ' + ${#temporals.format(candidature.dateCandidature, 'dd/MM/yyyy')}"></p>
+            </div>
+            <span th:replace="~{fragments/layout :: statut(${candidature.statut.libelle})}"></span>
+        </div>
+
+        <div class="message info" th:if="${candidature.statut.libelle == 'cree'}">Votre candidature est en cours d'examen par la RH.</div>
+        <div class="message succes" th:if="${candidature.statut.libelle == 'succes'}">Félicitations, vous avez réussi les épreuves !</div>
+        <div class="message erreur" th:if="${candidature.statut.libelle == 'rejete'}">Votre candidature n'a pas été retenue.</div>
+
+        <div class="grille-2">
+            <div>
+                <div class="carte" th:if="${candidature.dateTestTechnique != null}">
+                    <h2>Vos rendez-vous</h2>
+                    <dl class="fiche">
+                        <dt>Test technique</dt><dd th:text="${#temporals.format(candidature.dateTestTechnique, 'EEEE dd/MM/yyyy à HH:mm')}"></dd>
+                        <dt>Entretien</dt><dd th:text="${#temporals.format(candidature.dateEntretien, 'EEEE dd/MM/yyyy à HH:mm')}"></dd>
+                    </dl>
+                </div>
+                <div class="carte">
+                    <h2>Ma candidature</h2>
+                    <dl class="fiche">
+                        <dt>Type</dt><dd th:text="${candidature.typeCandidature.libelle}"></dd>
+                        <dt>Contrat visé</dt><dd th:text="${candidature.typeContrat.libelle}"></dd>
+                        <dt>Diplôme</dt><dd th:text="${candidature.diplome}"></dd>
+                        <dt>Expérience</dt><dd th:text="${candidature.anneesExperience} + ' an(s)'"></dd>
+                        <dt>CV</dt>
+                        <dd>
+                            <a class="bouton petit" th:href="@{/candidat/candidatures/{id}/cv-en-ligne(id=${candidature.id})}">Voir mon CV en ligne</a>
+                            <a th:if="${cv != null}" th:href="@{/candidat/candidatures/{id}/cv(id=${candidature.id})}" target="_blank"
+                               th:text="'PDF déposé : ' + ${cv.nomFichier}"></a>
+                            <span class="doux" th:if="${cv == null}">Aucun CV déposé</span>
+                        </dd>
+                    </dl>
+                    <h3>Expérience professionnelle</h3>
+                    <p class="texte-long" th:text="${candidature.experienceProfessionnelle ?: '—'}"></p>
+                    <h3>Lettre de motivation</h3>
+                    <p class="texte-long" th:text="${candidature.lettreMotivation}"></p>
+                </div>
+                <div class="carte" th:unless="${#lists.isEmpty(propositions)}">
+                    <h2>Propositions d'emploi</h2>
+                    <ul>
+                        <li th:each="p : ${propositions}">
+                            <a th:href="@{/candidat/propositions/{id}(id=${p.id})}" th:text="'Proposition du ' + ${#temporals.format(p.dateCreation, 'dd/MM/yyyy')}"></a>
+                            <span th:replace="~{fragments/layout :: statut(${p.statut.libelle})}"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div th:replace="~{fragments/layout :: historique(${historique})}"></div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

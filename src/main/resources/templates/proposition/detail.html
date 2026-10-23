@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Proposition')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu" th:with="p=${proposition}, s=${proposition.statut.libelle}">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <p><a th:href="@{/rh/propositions}">← Propositions</a></p>
+        <div class="entete-page">
+            <div>
+                <h1 th:text="'Proposition n°' + ${p.id}">Proposition</h1>
+                <p>
+                    <a th:href="@{/rh/candidatures/{id}(id=${p.candidature.id})}" th:text="${p.candidature.compte.nomComplet}"></a>
+                    <span th:text="' — ' + ${p.offre.intitule}"></span>
+                </p>
+            </div>
+            <span th:replace="~{fragments/layout :: statut(${s})}"></span>
+        </div>
+
+        <div class="message info" th:if="${s == 'enregistre' and !p.estExpiree()}">En attente de la réponse du candidat.</div>
+        <div class="message alerte" th:if="${s == 'enregistre' and p.estExpiree()}">Le candidat n'a pas répondu avant la date limite : révisez la proposition pour lui laisser plus de temps.</div>
+
+        <div class="carte" th:if="${s == 'en attente'}">
+            <h2>Contre-proposition du candidat</h2>
+            <p class="doux">Le candidat a refusé certains points (voir « Réponses du candidat »). Vous pouvez accepter ses souhaits,
+                réviser la proposition, ou clore la négociation.</p>
+            <div class="actions">
+                <form th:action="@{/rh/propositions/{id}/accepter-contre-proposition(id=${p.id})}" method="post">
+                    <button type="submit" class="bouton succes">Accepter ses souhaits</button>
+                </form>
+                <a class="bouton" th:href="@{/rh/propositions/{id}/reviser(id=${p.id})}">Réviser la proposition</a>
+                <form th:action="@{/rh/propositions/{id}/clore(id=${p.id})}" method="post" data-confirmer="Clore la négociation ? La proposition sera refusée.">
+                    <button type="submit" class="bouton danger">Clore la négociation</button>
+                </form>
+            </div>
+        </div>
+        <div class="actions" th:if="${s == 'enregistre' and p.estExpiree()}" style="margin-bottom:1rem">
+            <a class="bouton" th:href="@{/rh/propositions/{id}/reviser(id=${p.id})}">Réviser la proposition</a>
+        </div>
+
+        <div class="carte" th:if="${s == 'valide'}">
+            <h2>Contrat de travail</h2>
+            <p th:if="${contrat != null}">
+                <a th:href="@{/rh/contrats/{id}(id=${contrat.id})}" th:text="'Contrat n°' + ${contrat.id}"></a>
+                <span th:replace="~{fragments/layout :: statut(${contrat.statut.libelle})}"></span>
+            </p>
+            <form th:if="${contrat == null}" th:action="@{/rh/contrats/generer(proposition=${p.id})}" method="post">
+                <p class="doux">La proposition est acceptée : générez le contrat de travail.</p>
+                <button type="submit" class="bouton">Générer le contrat</button>
+            </form>
+        </div>
+
+        <div class="grille-2">
+            <div>
+                <div th:replace="~{fragments/proposition :: fiche(${p})}"></div>
+                <div th:replace="~{fragments/proposition :: reponses(${reponses})}"></div>
+                <div th:replace="~{fragments/proposition :: discussion(${messages}, @{/rh/propositions/{id}/messages(id=${p.id})}, 'RH')}"></div>
+            </div>
+            <div th:replace="~{fragments/layout :: historique(${historique})}"></div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

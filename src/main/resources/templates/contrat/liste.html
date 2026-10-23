@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Contrats')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: menu}"></aside>
+    <main class="contenu">
+        <div th:replace="~{fragments/layout :: messages}"></div>
+        <div class="entete-page"><div><h1>Contrats de travail</h1></div></div>
+
+        <div class="carte">
+            <h2>Propositions acceptées sans contrat
+                <span th:replace="~{fragments/layout :: pastille(${#lists.size(propositionsValides)})}"></span></h2>
+            <p class="doux" th:if="${#lists.isEmpty(propositionsValides)}">Aucun contrat à générer.</p>
+            <div class="tableau-conteneur" th:unless="${#lists.isEmpty(propositionsValides)}">
+                <table>
+                    <thead><tr><th>Candidat</th><th>Poste</th><th class="nombre">Salaire</th><th>Contrat</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${propositionsValides}">
+                        <td><a th:href="@{/rh/propositions/{id}(id=${p.id})}" th:text="${p.candidature.compte.nomComplet}"></a></td>
+                        <td th:text="${p.poste.libelle}"></td>
+                        <td class="nombre"><span th:replace="~{fragments/layout :: montant(${p.salaire})}"></span></td>
+                        <td th:text="${p.typeContrat.libelle}"></td>
+                        <td>
+                            <form th:action="@{/rh/contrats/generer(proposition=${p.id})}" method="post">
+                                <button type="submit" class="bouton petit">Générer le contrat</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="filtres">
+            <a th:href="@{/rh/contrats}" th:classappend="${statut == null or statut == ''} ? 'actif'">tous</a>
+            <a th:each="s : ${statuts}" th:href="@{/rh/contrats(statut=${s.libelle})}" th:text="${s.libelle}"
+               th:classappend="${statut == s.libelle} ? 'actif'"></a>
+        </div>
+        <div class="carte tableau-conteneur">
+            <table>
+                <thead><tr><th>N°</th><th>Candidat / employé</th><th>Poste</th><th>Type</th><th>Début</th><th>Statut</th><th></th></tr></thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(contrats)}"><td colspan="7" class="vide">Aucun contrat.</td></tr>
+                <tr th:each="c : ${contrats}" th:classappend="${c.statut.libelle == 'signe'} ? 'mise-en-avant'">
+                    <td th:text="${c.id}"></td>
+                    <td th:text="${c.employe != null ? c.employe.nomComplet + ' (' + c.employe.matricule + ')' : c.candidature.compte.nomComplet}"></td>
+                    <td th:text="${c.poste.libelle}"></td>
+                    <td th:text="${c.typeContrat.libelle}"></td>
+                    <td th:text="${#temporals.format(c.dateDebut, 'dd/MM/yyyy')}"></td>
+                    <td><span th:replace="~{fragments/layout :: statut(${c.statut.libelle})}"></span></td>
+                    <td><a class="bouton petit secondaire" th:href="@{/rh/contrats/{id}(id=${c.id})}">Ouvrir</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,20 +1,136 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="head(title)">
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title th:text="${title} + ' | Mr Tovo'">Mr Tovo</title>
-	<link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
 <body>
 
-<!-- Ancien nom gardé pour les pages existantes : utiliser fragments/entete :: entete -->
-<header th:fragment="header" th:replace="~{fragments/entete :: entete}"></header>
+<!-- ============ <head> commun ============ -->
+<head th:fragment="head(titre)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titre} + ' — Mr Tovo RH'">Mr Tovo RH</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
 
-<footer th:fragment="footer" class="site-footer">
-	<p>&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Groupe</p>
-	<script th:src="@{/js/app.js}"></script>
-</footer>
+<!-- ============ Menu latéral (dépend des rôles) ============ -->
+<aside class="menu" th:fragment="menu">
+    <a class="logo" th:href="@{/}">Mr Tovo <small>Gestion des ressources humaines</small></a>
+
+    <div class="groupe">Public</div>
+    <a th:href="@{/}" th:classappend="${pageCourante == '/'} ? 'actif'">Offres d'emploi</a>
+    <a th:if="${utilisateur == null}" th:href="@{/connexion}"
+       th:classappend="${pageCourante == '/connexion'} ? 'actif'">Se connecter</a>
+
+    <!-- Candidat -->
+    <th:block th:if="${utilisateur != null and utilisateur.estCandidat()}">
+        <div class="groupe">Mon espace candidat</div>
+        <a th:href="@{/candidat}" th:classappend="${pageCourante == '/candidat'} ? 'actif'">
+            Mes candidatures
+            <span th:replace="~{fragments/layout :: pastille(${(badges['propositions'] ?: 0) + (badges['contrats'] ?: 0)})}"></span>
+        </a>
+        <a th:href="@{/notifications}" th:classappend="${pageCourante == '/notifications'} ? 'actif'">
+            Messages de l'entreprise <span th:replace="~{fragments/layout :: pastille(${badges['notifications']})}"></span>
+        </a>
+    </th:block>
+
+    <!-- Employé -->
+    <th:block th:if="${utilisateur != null and utilisateur.estEmploye()}">
+        <div class="groupe">Mon espace</div>
+        <a th:href="@{/espace}" th:classappend="${pageCourante == '/espace'} ? 'actif'">Tableau de bord</a>
+        <a th:href="@{/notifications}" th:classappend="${pageCourante == '/notifications'} ? 'actif'">
+            Notifications <span th:replace="~{fragments/layout :: pastille(${badges['notifications']})}"></span>
+        </a>
+
+        <th:block th:if="${utilisateur.aRole('MANAGER')}">
+            <div class="groupe">Manager</div>
+            <a th:href="@{/manager/besoins}" th:classappend="${pageCourante == '/manager/besoins'} ? 'actif'">Besoins du département</a>
+            <a th:href="@{/manager/besoins/nouveau}" th:classappend="${pageCourante == '/manager/besoins/nouveau'} ? 'actif'">Exprimer un besoin</a>
+        </th:block>
+
+        <th:block th:if="${utilisateur.aRole('RH')}">
+            <div class="groupe">Ressources humaines</div>
+            <a th:href="@{/rh/besoins}" th:classappend="${pageCourante == '/rh/besoins'} ? 'actif'">
+                Besoins à analyser <span th:replace="~{fragments/layout :: pastille(${badges['rhBesoinsCrees']})}"></span>
+            </a>
+            <a th:href="@{/rh/offres/besoins-valides}" th:classappend="${pageCourante == '/rh/offres/besoins-valides'} ? 'actif'">
+                Offres à créer <span th:replace="~{fragments/layout :: pastille(${badges['rhBesoinsValides']})}"></span>
+            </a>
+            <a th:href="@{/rh/offres}" th:classappend="${pageCourante == '/rh/offres'} ? 'actif'">
+                Offres d'emploi <span th:replace="~{fragments/layout :: pastille(${badges['rhOffresValides']})}"></span>
+            </a>
+            <a th:href="@{/rh/candidatures}" th:classappend="${pageCourante == '/rh/candidatures'} ? 'actif'">
+                Candidatures <span th:replace="~{fragments/layout :: pastille(${(badges['rhCandidaturesCreees'] ?: 0) + (badges['rhCandidaturesEnCours'] ?: 0)})}"></span>
+            </a>
+            <a th:href="@{/rh/cvs}" th:classappend="${pageCourante == '/rh/cvs'} ? 'actif'">
+                CV
+            </a>
+            <a th:href="@{/rh/propositions}" th:classappend="${pageCourante == '/rh/propositions'} ? 'actif'">
+                Propositions <span th:replace="~{fragments/layout :: pastille(${(badges['rhCandidaturesSucces'] ?: 0) + (badges['rhPropositionsEnAttente'] ?: 0)})}"></span>
+            </a>
+            <a th:href="@{/rh/contrats}" th:classappend="${pageCourante == '/rh/contrats'} ? 'actif'">
+                Contrats <span th:replace="~{fragments/layout :: pastille(${(badges['rhPropositionsValides'] ?: 0) + (badges['rhContratsSignes'] ?: 0)})}"></span>
+            </a>
+            <a th:href="@{/rh/grille-salaire}" th:classappend="${pageCourante == '/rh/grille-salaire'} ? 'actif'">Grille salariale</a>
+        </th:block>
+
+        <th:block th:if="${utilisateur.aRole('FINANCE')}">
+            <div class="groupe">Finance</div>
+            <a th:href="@{/finance/besoins}" th:classappend="${pageCourante == '/finance/besoins'} ? 'actif'">
+                Besoins à valider <span th:replace="~{fragments/layout :: pastille(${badges['financeBesoins']})}"></span>
+            </a>
+        </th:block>
+
+        <th:block th:if="${utilisateur.aRole('DIRECTEUR')}">
+            <div class="groupe">Direction</div>
+            <a th:href="@{/directeur/offres}" th:classappend="${pageCourante == '/directeur/offres'} ? 'actif'">
+                Offres à valider <span th:replace="~{fragments/layout :: pastille(${badges['directeurOffres']})}"></span>
+            </a>
+        </th:block>
+    </th:block>
+
+    <div class="utilisateur" th:if="${utilisateur != null}">
+        <strong th:text="${utilisateur.nomComplet}">Nom</strong>
+        <span th:if="${utilisateur.estCandidat()}">Candidat</span>
+        <span th:if="${utilisateur.estEmploye()}"
+              th:text="${utilisateur.identifiant} + (${utilisateur.libellePoste} != null ? ' · ' + ${utilisateur.libellePoste} : '')">Matricule</span>
+        <form th:action="@{/deconnexion}" method="post">
+            <button type="submit" class="lien-menu">Se déconnecter</button>
+        </form>
+    </div>
+</aside>
+
+<!-- ============ Pastille de notification (affichée seulement si n > 0) ============ -->
+<span th:fragment="pastille(n)" class="pastille" th:if="${n != null and n > 0}" th:text="${n}">1</span>
+
+<!-- ============ Messages flash ============ -->
+<div th:fragment="messages">
+    <div class="message succes" th:if="${succes}" th:text="${succes}"></div>
+    <div class="message erreur" th:if="${erreur}" th:text="${erreur}"></div>
+</div>
+
+<!-- ============ Badge de statut ============ -->
+<span th:fragment="statut(libelle)" class="statut"
+      th:classappend="${#strings.replace(#strings.toLowerCase(libelle), ' ', '-')}" th:text="${libelle}">statut</span>
+
+<!-- ============ Montant en Ariary ============ -->
+<span th:fragment="montant(m)" class="montant"
+      th:text="${m == null ? '—' : #numbers.formatDecimal(m, 1, 'WHITESPACE', 0, 'POINT') + ' Ar'}">0 Ar</span>
+
+<!-- ============ Historique des statuts (traçabilité) ============ -->
+<div class="carte" th:fragment="historique(liste)">
+    <h2>Historique</h2>
+    <p class="doux" th:if="${#lists.isEmpty(liste)}">Aucun changement enregistré.</p>
+    <ul class="historique" th:unless="${#lists.isEmpty(liste)}">
+        <li th:each="h : ${liste}">
+            <span class="date" th:text="${#temporals.format(h.dateChangement, 'dd/MM/yyyy HH:mm')}"></span><br>
+            <span th:if="${h.ancienStatut != null and h.ancienStatut != h.nouveauStatut}">
+                <span th:replace="~{fragments/layout :: statut(${h.ancienStatut})}"></span> →
+            </span>
+            <span th:replace="~{fragments/layout :: statut(${h.nouveauStatut})}"></span>
+            <span class="doux" th:text="'par ' + ${h.auteur}"></span>
+            <div class="doux" th:if="${h.commentaire}" th:text="${h.commentaire}"></div>
+        </li>
+    </ul>
+</div>
 
 </body>
 </html>
