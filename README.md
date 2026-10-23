@@ -21,18 +21,25 @@ Le parcours fonctionnel complet et l'état d'avancement sont dans [`TODO.md`](TO
 ```bash
 # Créer la base (une seule fois)
 createdb -h localhost -U postgres rh
-
-# Créer les tables puis insérer les données de référence + la démo
-# ATTENTION : schema.sql supprime et recrée tout (remise à zéro)
-psql -h localhost -U postgres -d rh -f src/main/resources/db/schema.sql
-psql -h localhost -U postgres -d rh -f src/main/resources/db/data.sql
 ```
+
+Les tables et les données de référence + la démo sont créées **automatiquement au démarrage** par
+[Flyway](https://documentation.red-gate.com/flyway), à partir des scripts de `src/main/resources/db/migration`
+(`V1__schema.sql`, `V2__donnees.sql`, puis les évolutions). Chaque script n'est exécuté qu'une fois ;
+la table `flyway_schema_history` garde la trace de ceux déjà appliqués.
 
 Connexion par défaut : `jdbc:postgresql://localhost:5432/rh`, utilisateur `postgres`, mot de passe `postgres`.
 Pour changer, utilisez les variables d'environnement `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`.
 
 Hibernate est en mode `validate` : il **ne modifie jamais** la base, il vérifie seulement que les entités
-correspondent au schéma. Toute évolution du modèle passe par `schema.sql`.
+correspondent au schéma. **Toute évolution du modèle passe par un nouveau script** `V<n>__description.sql`
+dans `db/migration` (ne jamais modifier un script déjà appliqué).
+
+Remise à zéro complète de la base (au prochain démarrage, Flyway recrée tout) :
+
+```bash
+psql -h localhost -U postgres -d rh -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+```
 
 ### Lancer l'application
 
@@ -93,8 +100,8 @@ src/main/java/com/mrtovo/
 
 src/main/resources/
 ├── application.properties
-├── db/schema.sql      Schéma PostgreSQL (tables, contraintes, triggers date_modification)
-├── db/data.sql        Statuts/types + entreprise de démo
+├── db/migration/      Scripts Flyway : V1 schéma (tables, contraintes, triggers date_modification),
+│                      V2 statuts/types + entreprise de démo, puis les évolutions (V3…)
 ├── static/css/style.css, static/js/app.js
 └── templates/
     ├── fragments/     layout (head, menu, pastilles, statut, montant, historique), proposition
