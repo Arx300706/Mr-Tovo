@@ -14,8 +14,8 @@ besoin «cree» → «envoie Finance» → «valide Finance» → offre «enregi
 ## Phase 0 — Socle technique
 
 - [x] Projet Spring Boot 4 (Web MVC, Data JPA, Security, Validation, Thymeleaf, Lombok), driver PostgreSQL
-- [x] Schéma PostgreSQL `db/schema.sql` (tables de référence, structure, flux, contraintes, triggers `date_modification`)
-- [x] Données `db/data.sql` : statuts/types + entreprise de démo (4 départements, 6 services, 11 postes, grille salariale, budgets 2026–2027, 9 employés)
+- [x] Schéma PostgreSQL `db/migration/V1__schema.sql` (Flyway) (tables de référence, structure, flux, contraintes, triggers `date_modification`)
+- [x] Données `db/migration/V2__donnees.sql` : statuts/types + entreprise de démo (4 départements, 6 services, 11 postes, grille salariale, budgets 2026–2027, 9 employés)
 - [x] Hibernate en `validate` (le schéma SQL fait foi)
 - [x] Mise en page commune : menu latéral par rôle, messages flash, badges de statut, montants en Ariary, historique
 - [x] Pages d'erreur 403 / 404 / 500 sans trace technique

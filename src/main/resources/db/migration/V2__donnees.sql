@@ -1,6 +1,6 @@
 -- =================================================================
 -- Mr Tovo : données de référence + jeu de démonstration
--- À exécuter après schema.sql.
+-- Migration Flyway, appliquée après V1__schema.sql.
 -- Mot de passe de tous les employés de démo : 1234
 -- =================================================================
 
