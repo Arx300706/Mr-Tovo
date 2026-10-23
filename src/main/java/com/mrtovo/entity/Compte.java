@@ -37,6 +37,8 @@ public class Compte {
 
     private String adresse;
 
+    private String ville;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime dateCreation;

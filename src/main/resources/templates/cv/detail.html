@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('CV de ' + candidature.compte.nomComplet)}"></head>
+<body class="page-cv" th:with="c=${candidature}, compte=${candidature.compte}">
+<div class="barre-cv hors-impression">
+    <a class="bouton secondaire" th:href="${retour}">← Retour au dossier</a>
+    <button class="bouton" type="button" onclick="window.print()">Télécharger en PDF</button>
+</div>
+
+<main class="cv-document">
+    <header class="cv-entete">
+        <div class="cv-photo" th:if="${c.photo != null}">
+            <img th:src="${photoUrl}" alt="Photo professionnelle">
+        </div>
+        <div>
+            <p class="cv-surtitre">Curriculum vitæ</p>
+            <h1 th:text="${compte.nomComplet}">Nom Prénom</h1>
+            <p class="cv-metier" th:text="${c.metierRecherche ?: c.offre.intitule}">Métier recherché</p>
+            <div class="cv-coordonnees">
+                <a th:href="'mailto:' + ${compte.email}" th:text="${compte.email}"></a>
+                <a th:if="${compte.telephone}" th:href="'tel:' + ${compte.telephone}" th:text="${compte.telephone}"></a>
+                <span th:if="${compte.ville}" th:text="${compte.ville}"></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="cv-liens" th:if="${c.linkedin != null or c.github != null or c.portfolio != null}">
+        <a th:if="${c.linkedin}" th:href="${c.linkedin}" target="_blank" rel="noopener">LinkedIn</a>
+        <a th:if="${c.github}" th:href="${c.github}" target="_blank" rel="noopener">GitHub</a>
+        <a th:if="${c.portfolio}" th:href="${c.portfolio}" target="_blank" rel="noopener">Portfolio</a>
+    </div>
+
+    <section class="cv-identite hors-impression" th:if="${pieceIdentite != null}">
+        <div><strong>Pièce d’identité vérifiable</strong><span th:text="${pieceIdentite.type}"></span></div>
+        <a class="bouton secondaire petit" th:href="${pieceIdentiteUrl}" target="_blank" rel="noopener">Voir le document</a>
+    </section>
+
+    <section class="cv-section" th:if="${c.presentation}"><h2>Profil</h2><p th:text="${c.presentation}"></p></section>
+    <div class="cv-colonnes">
+        <div>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'EXPERIENCE'])}">
+                <h2>Expériences professionnelles</h2>
+                <article class="cv-item" th:each="e : ${elements.?[type == 'EXPERIENCE']}">
+                    <div class="cv-item-titre"><strong th:text="${e.sousTitre}"></strong><span th:text="${e.dateDebut + (e.dateFin != null and !e.dateFin.isBlank() ? ' — ' + e.dateFin : ' — Aujourd’hui')}"></span></div>
+                    <div class="doux" th:text="${e.titre}"></div><p th:if="${e.description}" th:text="${e.description}"></p>
+                </article>
+            </section>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'FORMATION'])}">
+                <h2>Formations et diplômes</h2>
+                <article class="cv-item" th:each="e : ${elements.?[type == 'FORMATION']}">
+                    <div class="cv-item-titre"><strong th:text="${e.sousTitre}"></strong><span th:text="${e.dateDebut + (e.dateFin != null ? ' — ' + e.dateFin : '')}"></span></div>
+                    <div class="doux" th:text="${e.titre}"></div><p th:if="${e.description}" th:text="${e.description}"></p>
+                </article>
+            </section>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'PROJET'])}"><h2>Projets et réalisations</h2>
+                <article class="cv-item" th:each="e : ${elements.?[type == 'PROJET']}"><strong th:text="${e.titre}"></strong><div class="doux" th:text="${e.sousTitre}"></div><p th:text="${e.description}"></p><a th:if="${e.url}" th:href="${e.url}" target="_blank">Voir le projet</a></article>
+            </section>
+        </div>
+        <aside>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'COMPETENCE'])}"><h2>Compétences</h2><ul class="cv-liste"><li th:each="e : ${elements.?[type == 'COMPETENCE']}"><span th:text="${e.titre}"></span><small th:text="${e.niveau}"></small></li></ul></section>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'QUALITE'])}"><h2>Qualités</h2><ul class="cv-liste simple"><li th:each="e : ${elements.?[type == 'QUALITE']}" th:text="${e.titre}"></li></ul></section>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'LANGUE'])}"><h2>Langues</h2><ul class="cv-liste"><li th:each="e : ${elements.?[type == 'LANGUE']}"><span th:text="${e.titre}"></span><small th:text="${e.niveau}"></small></li></ul></section>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'CERTIFICATION'])}"><h2>Certifications</h2><article class="cv-item compact" th:each="e : ${elements.?[type == 'CERTIFICATION']}"><strong th:text="${e.titre}"></strong><div class="doux" th:text="${e.sousTitre + (e.dateFin != null ? ' · ' + e.dateFin : '')}"></div></article></section>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'INTERET'])}"><h2>Centres d’intérêt</h2><ul class="cv-liste simple"><li th:each="e : ${elements.?[type == 'INTERET']}" th:text="${e.titre}"></li></ul></section>
+            <section class="cv-section" th:if="${!#lists.isEmpty(elements.?[type == 'LIEN'])}"><h2>Liens</h2><ul class="cv-liste simple"><li th:each="e : ${elements.?[type == 'LIEN']}"><a th:href="${e.url}" th:text="${e.titre}" target="_blank"></a></li></ul></section>
+        </aside>
+    </div>
+</main>
+</body>
+</html>

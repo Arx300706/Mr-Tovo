@@ -13,6 +13,9 @@ import com.mrtovo.service.TraceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ContentDisposition;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,6 +54,33 @@ public class CandidatureController {
     @GetMapping("/{id}/cv")
     public ResponseEntity<byte[]> cv(@PathVariable Integer id) {
         return ReponsePdf.cv(candidatureService.cvDe(candidatureService.trouver(id)));
+    }
+
+    @GetMapping("/{id}/cv-en-ligne")
+    public String cvEnLigne(@PathVariable Integer id, Model model) {
+        model.addAttribute("candidature", candidatureService.trouver(id));
+        model.addAttribute("elements", candidatureService.elementsCv(id));
+        model.addAttribute("pieceIdentite", candidatureService.pieceIdentite(id).orElse(null));
+        model.addAttribute("retour", "/rh/candidatures/" + id);
+        model.addAttribute("photoUrl", "/rh/candidatures/" + id + "/photo");
+        model.addAttribute("pieceIdentiteUrl", "/rh/candidatures/" + id + "/piece-identite");
+        return "cv/detail";
+    }
+
+    @GetMapping("/{id}/photo")
+    public ResponseEntity<byte[]> photo(@PathVariable Integer id) {
+        Candidature c = candidatureService.trouver(id);
+        if (c.getPhoto() == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(c.getPhotoType())).body(c.getPhoto());
+    }
+
+    @GetMapping("/{id}/piece-identite")
+    public ResponseEntity<byte[]> pieceIdentite(@PathVariable Integer id) {
+        candidatureService.trouver(id);
+        return candidatureService.pieceIdentite(id).map(document -> ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(document.getMimeType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(document.getNomFichier()).build().toString())
+                .body(document.getFichier())).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/{id}/planifier")

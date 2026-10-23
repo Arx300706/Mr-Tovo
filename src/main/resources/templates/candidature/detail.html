@@ -106,8 +106,9 @@
                         <dt>Expérience</dt><dd th:text="${c.anneesExperience} + ' an(s)'"></dd>
                         <dt>CV</dt>
                         <dd>
+                            <a class="bouton petit" th:href="@{/rh/candidatures/{id}/cv-en-ligne(id=${c.id})}">Voir le CV en ligne</a>
                             <a th:if="${cv != null}" th:href="@{/rh/candidatures/{id}/cv(id=${c.id})}" target="_blank"
-                               th:text="${cv.nomFichier}"></a>
+                               th:text="'PDF déposé : ' + ${cv.nomFichier}"></a>
                             <span class="doux" th:if="${cv == null}">Aucun CV déposé</span>
                         </dd>
                         <dt>Contrat visé</dt><dd th:text="${c.typeContrat.libelle}"></dd>

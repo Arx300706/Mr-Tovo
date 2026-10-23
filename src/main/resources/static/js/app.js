@@ -41,4 +41,58 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll("[data-panneau]").forEach(p =>
                 p.classList.toggle("cache", p.dataset.panneau !== bouton.dataset.onglet));
         }));
+
+    // Éditeur de CV : toutes les rubriques acceptent plusieurs lignes.
+    const definitions = {
+        experience: [
+            ["titre", "Entreprise", "text"], ["sousTitre", "Poste", "text"],
+            ["dateDebut", "Date de début", "month"], ["dateFin", "Date de fin", "month"],
+            ["description", "Missions et résultats", "textarea"]
+        ],
+        formation: [
+            ["titre", "Établissement", "text"], ["sousTitre", "Diplôme / formation", "text"],
+            ["dateDebut", "Début", "month"], ["dateFin", "Fin", "month"],
+            ["description", "Description", "textarea"]
+        ],
+        competence: [["titre", "Compétence", "text"], ["niveau", "Niveau", "text"]],
+        qualite: [["titre", "Qualité", "text"], ["description", "Exemple concret", "text"]],
+        langue: [["titre", "Langue", "text"], ["niveau", "Niveau", "text"]],
+        projet: [["titre", "Nom du projet", "text"], ["sousTitre", "Rôle / technologies", "text"], ["description", "Description et résultat", "textarea"], ["url", "Lien", "url"]],
+        certification: [["titre", "Certification", "text"], ["sousTitre", "Organisme", "text"], ["dateFin", "Date d'obtention", "month"], ["url", "Lien", "url"]],
+        interet: [["titre", "Centre d’intérêt", "text"], ["description", "Précision", "text"]],
+        lien: [["titre", "Nom du lien", "text"], ["url", "Adresse web", "url"]]
+    };
+
+    document.querySelectorAll("[data-collection]").forEach(section => {
+        const conteneur = section.querySelector("[data-items]");
+        const champs = definitions[section.dataset.kind];
+        let index = 0;
+        const ajouter = () => {
+            const ligne = document.createElement("div");
+            ligne.className = "cv-element-form";
+            const grille = document.createElement("div");
+            grille.className = "ligne";
+            champs.forEach(([propriete, libelle, type]) => {
+                const bloc = document.createElement("div");
+                bloc.className = "champ";
+                const label = document.createElement("label");
+                label.textContent = libelle;
+                const champ = type === "textarea" ? document.createElement("textarea") : document.createElement("input");
+                if (type !== "textarea") champ.type = type;
+                champ.name = `${section.dataset.collection}[${index}].${propriete}`;
+                bloc.append(label, champ);
+                grille.appendChild(bloc);
+            });
+            const supprimer = document.createElement("button");
+            supprimer.type = "button";
+            supprimer.className = "bouton danger petit";
+            supprimer.textContent = "Supprimer";
+            supprimer.addEventListener("click", () => ligne.remove());
+            ligne.append(grille, supprimer);
+            conteneur.appendChild(ligne);
+            index++;
+        };
+        section.querySelector("[data-ajouter]").addEventListener("click", ajouter);
+        ajouter();
+    });
 });

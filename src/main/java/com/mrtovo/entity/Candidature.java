@@ -66,6 +66,41 @@ public class Candidature {
     @Column(columnDefinition = "text")
     private String experienceProfessionnelle;
 
+    private String metierRecherche;
+
+    @Column(columnDefinition = "text")
+    private String presentation;
+
+    @Column(columnDefinition = "text")
+    private String formations;
+
+    @Column(columnDefinition = "text")
+    private String competences;
+
+    @Column(columnDefinition = "text")
+    private String qualites;
+
+    @Column(columnDefinition = "text")
+    private String langues;
+
+    @Column(columnDefinition = "text")
+    private String projets;
+
+    @Column(columnDefinition = "text")
+    private String certifications;
+
+    @Column(columnDefinition = "text")
+    private String centresInteret;
+
+    private String linkedin;
+    private String github;
+    private String portfolio;
+
+    @Column(columnDefinition = "bytea")
+    private byte[] photo;
+
+    private String photoType;
+
     private LocalDateTime dateTestTechnique;
 
     private LocalDateTime dateEntretien;

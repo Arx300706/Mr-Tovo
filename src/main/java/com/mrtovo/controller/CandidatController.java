@@ -11,6 +11,9 @@ import com.mrtovo.security.UtilisateurConnecte;
 import com.mrtovo.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ContentDisposition;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -86,6 +89,37 @@ public class CandidatController {
     @GetMapping("/candidatures/{id}/cv")
     public ResponseEntity<byte[]> cv(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u) {
         return ReponsePdf.cv(candidatureService.cvDe(candidatureService.trouverPourCandidat(id, u)));
+    }
+
+    @GetMapping("/candidatures/{id}/cv-en-ligne")
+    public String cvEnLigne(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u, Model model) {
+        model.addAttribute("candidature", candidatureService.trouverPourCandidat(id, u));
+        model.addAttribute("elements", candidatureService.elementsCv(id));
+        model.addAttribute("pieceIdentite", candidatureService.pieceIdentite(id).orElse(null));
+        model.addAttribute("retour", "/candidat/candidatures/" + id);
+        model.addAttribute("photoUrl", "/candidat/candidatures/" + id + "/photo");
+        model.addAttribute("pieceIdentiteUrl", "/candidat/candidatures/" + id + "/piece-identite");
+        return "cv/detail";
+    }
+
+    @GetMapping("/candidatures/{id}/photo")
+    public ResponseEntity<byte[]> photo(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u) {
+        Candidature c = candidatureService.trouverPourCandidat(id, u);
+        return image(c);
+    }
+
+    private static ResponseEntity<byte[]> image(Candidature c) {
+        if (c.getPhoto() == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(c.getPhotoType())).body(c.getPhoto());
+    }
+
+    @GetMapping("/candidatures/{id}/piece-identite")
+    public ResponseEntity<byte[]> pieceIdentite(@PathVariable Integer id, @AuthenticationPrincipal UtilisateurConnecte u) {
+        candidatureService.trouverPourCandidat(id, u);
+        return candidatureService.pieceIdentite(id).map(document -> ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(document.getMimeType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(document.getNomFichier()).build().toString())
+                .body(document.getFichier())).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/contrats/{id}")

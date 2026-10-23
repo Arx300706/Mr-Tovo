@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <form class="carte" th:action="@{/offres/{id}/candidater(id=${offre.id})}" th:object="${form}" method="post" enctype="multipart/form-data" novalidate>
+        <form class="carte formulaire-candidature" th:action="@{/offres/{id}/candidater(id=${offre.id})}" th:object="${form}" method="post" enctype="multipart/form-data" novalidate>
             <div class="message erreur" th:if="${#fields.hasErrors('*')}">Merci de corriger les champs en rouge.</div>
 
             <fieldset>
@@ -61,7 +61,10 @@
                         </select>
                     </div>
                 </div>
-                <div class="champ"><label for="adresse">Adresse</label><input type="text" th:field="*{adresse}"></div>
+                <div class="ligne">
+                    <div class="champ"><label for="adresse">Adresse</label><input type="text" th:field="*{adresse}" autocomplete="street-address"></div>
+                    <div class="champ"><label for="ville">Ville</label><input type="text" th:field="*{ville}" autocomplete="address-level2" placeholder="ex. Antananarivo"></div>
+                </div>
                 <div class="ligne">
                     <div class="champ"><label for="motDePasse">Mot de passe</label><input type="password" th:field="*{motDePasse}" required></div>
                     <div class="champ"><label for="confirmation">Confirmation</label><input type="password" th:field="*{confirmation}"></div>
@@ -102,7 +105,90 @@
                 </div>
             </fieldset>
 
-            <button type="submit" class="bouton">Valider ma candidature</button>
+            <fieldset>
+                <legend th:text="${utilisateur != null and utilisateur.estCandidat()} ? '3. Votre CV en ligne' : '4. Votre CV en ligne'">Votre CV en ligne</legend>
+                <p class="doux">Ces informations créeront automatiquement un CV clair que vous pourrez consulter et enregistrer en PDF.</p>
+                <div class="ligne">
+                    <div class="champ">
+                        <label for="metierRecherche">Métier recherché</label>
+                        <input type="text" th:field="*{metierRecherche}" th:placeholder="${offre.intitule}">
+                        <div class="erreur-champ" th:errors="*{metierRecherche}"></div>
+                    </div>
+                    <div class="champ">
+                        <label for="photo">Photo professionnelle <span class="facultatif">facultatif</span></label>
+                        <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
+                        <div class="aide">JPG ou PNG, 2 Mo maximum.</div>
+                    </div>
+                </div>
+                <div class="champ">
+                    <label for="presentation">Présentation / objectif professionnel</label>
+                    <textarea th:field="*{presentation}" rows="4" placeholder="Présentez en quelques phrases votre profil, vos forces et votre objectif."></textarea>
+                    <div class="erreur-champ" th:errors="*{presentation}"></div>
+                </div>
+                <div class="bloc-identite">
+                    <h3>Pièce d’identité <span class="facultatif">facultatif et confidentiel</span></h3>
+                    <p class="doux">La pièce sera uniquement accessible au candidat et au service RH.</p>
+                    <div class="ligne">
+                        <div class="champ">
+                            <label for="typePieceIdentite">Type de document</label>
+                            <select th:field="*{typePieceIdentite}">
+                                <option value="">— Aucun document —</option>
+                                <option value="CIN">Carte d’identité nationale (CIN)</option>
+                                <option value="PASSEPORT">Passeport</option>
+                                <option value="PERMIS">Permis de conduire</option>
+                            </select>
+                        </div>
+                        <div class="champ">
+                            <label for="pieceIdentite">Importer le document</label>
+                            <input type="file" id="pieceIdentite" name="pieceIdentite" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png">
+                            <div class="aide">PDF, JPG ou PNG — 5 Mo maximum.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cv-editeur">
+                    <section class="cv-rubrique" data-collection="experiences" data-kind="experience">
+                        <div class="cv-rubrique-entete"><div><h3>Expériences professionnelles</h3><p>Entreprise, poste, période et missions.</p></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="formationsMultiples" data-kind="formation">
+                        <div class="cv-rubrique-entete"><div><h3>Formations et diplômes</h3><p>Établissement, diplôme et période.</p></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="competencesMultiples" data-kind="competence">
+                        <div class="cv-rubrique-entete"><div><h3>Compétences</h3><p>Ajoutez chaque compétence et son niveau.</p></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="qualitesMultiples" data-kind="qualite">
+                        <div class="cv-rubrique-entete"><div><h3>Qualités professionnelles</h3><p>Ajoutez vos principales qualités une par une.</p></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="languesMultiples" data-kind="langue">
+                        <div class="cv-rubrique-entete"><div><h3>Langues</h3><p>Ajoutez chaque langue et le niveau pratiqué.</p></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="projetsMultiples" data-kind="projet">
+                        <div class="cv-rubrique-entete"><div><h3>Projets et réalisations</h3></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="certificationsMultiples" data-kind="certification">
+                        <div class="cv-rubrique-entete"><div><h3>Certifications</h3></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="interetsMultiples" data-kind="interet">
+                        <div class="cv-rubrique-entete"><div><h3>Centres d’intérêt</h3></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                    <section class="cv-rubrique" data-collection="liensMultiples" data-kind="lien">
+                        <div class="cv-rubrique-entete"><div><h3>Liens professionnels</h3><p>LinkedIn, GitHub, portfolio ou autre.</p></div><button type="button" class="bouton secondaire petit" data-ajouter>+ Ajouter</button></div>
+                        <div data-items></div>
+                    </section>
+                </div>
+            </fieldset>
+
+            <div class="actions-formulaire">
+                <p class="doux">Vous pourrez relire votre CV et suivre votre dossier depuis votre espace candidat.</p>
+                <button type="submit" class="bouton bouton-large">Valider ma candidature</button>
+            </div>
         </form>
     </main>
 </div>

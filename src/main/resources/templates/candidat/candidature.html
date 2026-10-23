@@ -37,8 +37,9 @@
                         <dt>Expérience</dt><dd th:text="${candidature.anneesExperience} + ' an(s)'"></dd>
                         <dt>CV</dt>
                         <dd>
+                            <a class="bouton petit" th:href="@{/candidat/candidatures/{id}/cv-en-ligne(id=${candidature.id})}">Voir mon CV en ligne</a>
                             <a th:if="${cv != null}" th:href="@{/candidat/candidatures/{id}/cv(id=${candidature.id})}" target="_blank"
-                               th:text="${cv.nomFichier}"></a>
+                               th:text="'PDF déposé : ' + ${cv.nomFichier}"></a>
                             <span class="doux" th:if="${cv == null}">Aucun CV déposé</span>
                         </dd>
                     </dl>

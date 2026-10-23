@@ -2,6 +2,9 @@
 
 Application web de gestion RH : **besoin → offre d'emploi → candidature → proposition → contrat → embauche**.
 
+Le dépôt de candidature comprend aussi un **CV en ligne structuré et responsive** (profil, expériences,
+formations, compétences, langues, projets et liens professionnels), imprimable ou enregistrable en PDF.
+
 | Élément       | Choix                                  |
 |---------------|----------------------------------------|
 | Java          | 21                                     |
@@ -26,6 +29,12 @@ createdb -h localhost -U postgres rh
 # ATTENTION : schema.sql supprime et recrée tout (remise à zéro)
 psql -h localhost -U postgres -d rh -f src/main/resources/db/schema.sql
 psql -h localhost -U postgres -d rh -f src/main/resources/db/data.sql
+```
+
+Pour mettre à jour une base déjà créée sans effacer ses données :
+
+```bash
+psql -h localhost -U postgres -d rh -f src/main/resources/db/migration_cv_en_ligne.sql
 ```
 
 Connexion par défaut : `jdbc:postgresql://localhost:5432/rh`, utilisateur `postgres`, mot de passe `postgres`.

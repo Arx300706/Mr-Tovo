@@ -9,8 +9,10 @@ import com.mrtovo.exception.RegleMetierException;
 import com.mrtovo.exception.RessourceIntrouvableException;
 import com.mrtovo.repository.CandidatureRepository;
 import com.mrtovo.repository.CvRepository;
+import com.mrtovo.repository.CvElementRepository;
 import com.mrtovo.repository.CompteRepository;
 import com.mrtovo.repository.EmployeRepository;
+import com.mrtovo.repository.DocumentIdentiteRepository;
 import com.mrtovo.security.UtilisateurConnecte;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,10 +46,14 @@ public class CandidatureService {
     private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm");
 
     private static final long TAILLE_MAX_CV = 5L * 1024 * 1024;
+    private static final long TAILLE_MAX_PHOTO = 2L * 1024 * 1024;
+    private static final long TAILLE_MAX_IDENTITE = 5L * 1024 * 1024;
     private static final byte[] ENTETE_PDF = "%PDF-".getBytes(StandardCharsets.US_ASCII);
 
     private final CandidatureRepository candidatureRepository;
     private final CvRepository cvRepository;
+    private final CvElementRepository cvElementRepository;
+    private final DocumentIdentiteRepository documentIdentiteRepository;
     private final CompteRepository compteRepository;
     private final EmployeRepository employeRepository;
     private final OffreService offreService;
@@ -125,8 +131,23 @@ public class CandidatureService {
         c.setAnneesExperience(f.getAnneesExperience());
         c.setLettreMotivation(f.getLettreMotivation());
         c.setExperienceProfessionnelle(f.getExperienceProfessionnelle());
+        c.setMetierRecherche(f.getMetierRecherche());
+        c.setPresentation(f.getPresentation());
+        c.setFormations(f.getFormations());
+        c.setCompetences(f.getCompetences());
+        c.setQualites(f.getQualites());
+        c.setLangues(f.getLangues());
+        c.setProjets(f.getProjets());
+        c.setCertifications(f.getCertifications());
+        c.setCentresInteret(f.getCentresInteret());
+        c.setLinkedin(normaliserLien(f.getLinkedin()));
+        c.setGithub(normaliserLien(f.getGithub()));
+        c.setPortfolio(normaliserLien(f.getPortfolio()));
+        enregistrerPhoto(c, f.getPhoto());
         c.setStatut(references.parLibelle(StatutCandidature.class, StatutCandidature.CREE));
         candidatureRepository.save(c);
+        enregistrerElementsCv(c, f);
+        enregistrerPieceIdentite(c, f.getTypePieceIdentite(), f.getPieceIdentite());
         if (avecCv) {
             Cv cv = new Cv();
             cv.setCandidature(c);
@@ -187,7 +208,104 @@ public class CandidatureService {
         compte.setDateNaissance(f.getDateNaissance());
         compte.setSexe(f.getSexe());
         compte.setAdresse(f.getAdresse());
+        compte.setVille(f.getVille());
         return compte;
+    }
+
+    private static void enregistrerPhoto(Candidature candidature, MultipartFile photo) {
+        if (photo == null || photo.isEmpty()) return;
+        if (photo.getSize() > TAILLE_MAX_PHOTO) {
+            throw new RegleMetierException("La photo ne doit pas dépasser 2 Mo");
+        }
+        String type = photo.getContentType();
+        if (!"image/jpeg".equals(type) && !"image/png".equals(type)) {
+            throw new RegleMetierException("La photo doit être au format JPG ou PNG");
+        }
+        try {
+            candidature.setPhoto(photo.getBytes());
+            candidature.setPhotoType(type);
+        } catch (IOException e) {
+            throw new RegleMetierException("La photo n'a pas pu être lue");
+        }
+    }
+
+    /** Ajoute https:// quand l'utilisateur saisit seulement le domaine. */
+    private static String normaliserLien(String lien) {
+        if (lien == null || lien.isBlank()) return null;
+        String valeur = lien.trim();
+        return valeur.matches("(?i)^https?://.*") ? valeur : "https://" + valeur;
+    }
+
+    private void enregistrerElementsCv(Candidature candidature, CandidatureForm f) {
+        ajouterElements(candidature, CvElement.EXPERIENCE, f.getExperiences());
+        ajouterElements(candidature, CvElement.FORMATION, f.getFormationsMultiples());
+        ajouterElements(candidature, CvElement.COMPETENCE, f.getCompetencesMultiples());
+        ajouterElements(candidature, CvElement.QUALITE, f.getQualitesMultiples());
+        ajouterElements(candidature, CvElement.LANGUE, f.getLanguesMultiples());
+        ajouterElements(candidature, CvElement.PROJET, f.getProjetsMultiples());
+        ajouterElements(candidature, CvElement.CERTIFICATION, f.getCertificationsMultiples());
+        ajouterElements(candidature, CvElement.INTERET, f.getInteretsMultiples());
+        ajouterElements(candidature, CvElement.LIEN, f.getLiensMultiples());
+    }
+
+    private void ajouterElements(Candidature candidature, String type, List<CandidatureForm.CvElementForm> elements) {
+        if (elements == null) return;
+        int ordre = 0;
+        for (CandidatureForm.CvElementForm form : elements) {
+            if (form == null || estVide(form.getTitre())) continue;
+            CvElement element = new CvElement();
+            element.setCandidature(candidature);
+            element.setType(type);
+            element.setTitre(form.getTitre().trim());
+            element.setSousTitre(form.getSousTitre());
+            element.setDateDebut(form.getDateDebut());
+            element.setDateFin(form.getDateFin());
+            element.setDescription(form.getDescription());
+            element.setNiveau(form.getNiveau());
+            element.setUrl(CvElement.LIEN.equals(type) ? normaliserLien(form.getUrl()) : form.getUrl());
+            element.setOrdre(ordre++);
+            cvElementRepository.save(element);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<CvElement> elementsCv(Integer idCandidature) {
+        return cvElementRepository.findByCandidatureIdOrderByTypeAscOrdreAsc(idCandidature);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<DocumentIdentite> pieceIdentite(Integer idCandidature) {
+        return documentIdentiteRepository.findByCandidatureId(idCandidature);
+    }
+
+    private void enregistrerPieceIdentite(Candidature candidature, String type, MultipartFile fichier) {
+        if (fichier == null || fichier.isEmpty()) return;
+        if (!Set.of(DocumentIdentite.CIN, DocumentIdentite.PASSEPORT, DocumentIdentite.PERMIS).contains(type)) {
+            throw new RegleMetierException("Choisissez le type de pièce d'identité");
+        }
+        if (fichier.getSize() > TAILLE_MAX_IDENTITE) {
+            throw new RegleMetierException("La pièce d'identité ne doit pas dépasser 5 Mo");
+        }
+        try {
+            byte[] contenu = fichier.getBytes();
+            String mime = typeMimeIdentite(contenu);
+            DocumentIdentite document = new DocumentIdentite();
+            document.setCandidature(candidature);
+            document.setType(type);
+            document.setNomFichier(fichier.getOriginalFilename() == null ? "piece-identite" : fichier.getOriginalFilename());
+            document.setMimeType(mime);
+            document.setFichier(contenu);
+            documentIdentiteRepository.save(document);
+        } catch (IOException e) {
+            throw new RegleMetierException("La pièce d'identité n'a pas pu être lue");
+        }
+    }
+
+    private static String typeMimeIdentite(byte[] contenu) {
+        if (contenu.length >= 5 && Arrays.equals(Arrays.copyOf(contenu, 5), ENTETE_PDF)) return "application/pdf";
+        if (contenu.length >= 3 && (contenu[0] & 0xff) == 0xff && (contenu[1] & 0xff) == 0xd8 && (contenu[2] & 0xff) == 0xff) return "image/jpeg";
+        if (contenu.length >= 8 && (contenu[0] & 0xff) == 0x89 && contenu[1] == 0x50 && contenu[2] == 0x4e && contenu[3] == 0x47) return "image/png";
+        throw new RegleMetierException("La pièce d'identité doit être un PDF ou une image JPG/PNG");
     }
 
     /** Employé : matricule obligatoire et en poste. Ancienne relation : matricule facultatif. */
