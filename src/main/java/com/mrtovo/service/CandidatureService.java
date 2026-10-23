@@ -45,9 +45,6 @@ public class CandidatureService {
 
     private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm");
 
-    private static final long TAILLE_MAX_CV = 5L * 1024 * 1024;
-    private static final long TAILLE_MAX_PHOTO = 2L * 1024 * 1024;
-    private static final long TAILLE_MAX_IDENTITE = 5L * 1024 * 1024;
     private static final byte[] ENTETE_PDF = "%PDF-".getBytes(StandardCharsets.US_ASCII);
 
     private final CandidatureRepository candidatureRepository;
@@ -161,11 +158,8 @@ public class CandidatureService {
         return c;
     }
 
-    /** CV facultatif : fichier PDF de 5 Mo maximum (vérifié sur son contenu, pas seulement sur son nom). */
+    /** CV facultatif : le contenu PDF est vérifié, pas seulement le nom du fichier. */
     private static byte[] lireCvPdf(MultipartFile cv) {
-        if (cv.getSize() > TAILLE_MAX_CV) {
-            throw new RegleMetierException("Le CV ne doit pas dépasser 5 Mo");
-        }
         try {
             byte[] contenu = cv.getBytes();
             if (contenu.length < ENTETE_PDF.length || !Arrays.equals(Arrays.copyOf(contenu, ENTETE_PDF.length), ENTETE_PDF)) {
@@ -225,9 +219,6 @@ public class CandidatureService {
 
     private static void enregistrerPhoto(Candidature candidature, MultipartFile photo) {
         if (photo == null || photo.isEmpty()) return;
-        if (photo.getSize() > TAILLE_MAX_PHOTO) {
-            throw new RegleMetierException("La photo ne doit pas dépasser 2 Mo");
-        }
         String type = photo.getContentType();
         if (!"image/jpeg".equals(type) && !"image/png".equals(type)) {
             throw new RegleMetierException("La photo doit être au format JPG ou PNG");
@@ -293,9 +284,6 @@ public class CandidatureService {
         if (fichier == null || fichier.isEmpty()) return;
         if (!Set.of(DocumentIdentite.CIN, DocumentIdentite.PASSEPORT, DocumentIdentite.PERMIS).contains(type)) {
             throw new RegleMetierException("Choisissez le type de pièce d'identité");
-        }
-        if (fichier.getSize() > TAILLE_MAX_IDENTITE) {
-            throw new RegleMetierException("La pièce d'identité ne doit pas dépasser 5 Mo");
         }
         try {
             byte[] contenu = fichier.getBytes();
